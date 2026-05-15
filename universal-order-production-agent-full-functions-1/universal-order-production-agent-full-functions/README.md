@@ -1,25 +1,109 @@
-# Universal AI Order & Production Assistant — MVP Function Foundation
+# Universal AI Order & Production Assistant
 
-This repository contains the reusable code foundation for the MVP.
+MVP локального AI-асистента для прийому замовлень, виробництва, залишків, закупівель і менеджерського контролю.
 
-## What is included
+Поточне демо налаштоване під український ринок і сценарій кондитерської: клієнт пише Telegram-боту, бот збирає замовлення на торт, враховує побажання до рецепта, створює замовлення, резервує матеріали та надсилає менеджеру сповіщення.
 
-- Local JSON data adapter that simulates Google Sheets
-- Schema manager
-- Workspace setup
-- Order service
-- Product/BOM service
-- Stock/reservation service
-- Purchase request service
-- Calendar/capacity service
-- Task/reminder service
-- Manager actions
-- Cost review and recommended price logic
-- Audit log
-- Idempotency / duplicate protection
-- Local demo scenario
+## Що вже є
 
-## Quick start
+- Веб-кабінет для реєстрації, входу та налаштування ресурсів.
+- Український інтерфейс з перемикачем UA / EN.
+- Локальний запуск на Windows без встановлення серверу.
+- Telegram-бот у polling mode для тестування.
+- Demo cakes workspace з тестовими продуктами, рецептами, залишками й замовленнями.
+- AI-розбір клієнтських повідомлень через OpenRouter.
+- Клієнтське меню `/start`: продукти, тестові залишки, приклади замовлень.
+- Створення замовлень з Telegram.
+- Побажання до рецепта: більше шоколаду, додати горіхи, без горіхів, більше ягід, напис.
+- Розрахунок BOM, собівартості, ціни, знижок і робочих годин.
+- Сповіщення менеджеру про нове замовлення.
+- Запит клієнта на зворотний зв'язок із менеджером.
+- Менеджерські команди для замовлень, рецептів, матеріалів, залишків, статусів, знижок і ручної ціни.
+- Документація в папці `documentation/`.
+
+## Швидкий запуск для тестувальника
+
+Для користувача без програмування основна інструкція тут:
+
+```text
+BOT_TEST_INSTRUCTION_UA.txt
+```
+
+Коротко:
+
+1. Запустити веб-кабінет:
+
+```text
+START_APP.bat
+```
+
+2. Відкрити:
+
+```text
+http://localhost:3000
+```
+
+3. Зареєструвати користувача.
+
+4. Заповнити 3 поля для Telegram demo:
+
+```text
+TELEGRAM_BOT_TOKEN
+MANAGER_CHAT_ID
+OPENROUTER_API_KEY
+```
+
+5. Натиснути `Demo cakes`.
+
+6. Запустити Telegram-бота:
+
+```text
+START_TELEGRAM_BOT.bat
+```
+
+7. У Telegram написати боту:
+
+```text
+/start
+```
+
+Приклад замовлення:
+
+```text
+Хочу шоколадний торт 2 кг на завтра, більше шоколаду і без горіхів
+```
+
+## Менеджерські команди
+
+Писати їх треба з Telegram-акаунта, chat id якого вказаний у `MANAGER_CHAT_ID`.
+
+```text
+/orders
+/order ORD-XXXX
+/products
+/components
+/recipe Chocolate Cake
+/stock
+/ready ORD-XXXX
+/pickup ORD-XXXX
+```
+
+Знижки:
+
+```text
+/discount_over_amount 1500 10
+/discount_every_n 10 15
+/discounts
+/discount_disable DISC-XXXX
+```
+
+Ручна ціна:
+
+```text
+/set_order_price ORD-XXXX 1200 індивідуальна домовленість
+```
+
+## Запуск для розробника
 
 ```bash
 npm install
@@ -29,68 +113,48 @@ npm run demo:order
 npm test
 ```
 
-## Web onboarding
+Запуск web server:
 
 ```bash
 npm run web:start
 ```
 
-Open `http://localhost:3000` to register, connect Telegram/AI/Google resources, run workspace setup, and view the dashboard.
-
-Working documentation is in `documentation/`.
-
-## Architecture
-
-Telegram / n8n should call these reusable functions instead of duplicating table logic inside workflows.
-
-Flow:
+Відкрити:
 
 ```text
-Telegram → n8n → JS business services → Data Layer → Google Sheets / Local Adapter
+http://localhost:3000
 ```
 
-For MVP this repo uses `LocalJsonStore`. Later replace it with `GoogleSheetsStore` without rewriting business logic.
+## Архітектура
 
+Бізнес-логіка винесена в JS services. Telegram, n8n або web layer мають викликати сервісні функції, а не працювати напряму з таблицями.
 
-## Mandatory Code Rules
-
-See `docs/CODE_REQUIREMENTS.md`.
-
-Core principle:
+Базовий потік:
 
 ```text
-n8n workflow → service function → Data Access Layer → storage adapter
+Telegram / Web / n8n -> JS business services -> Data Layer -> Local JSON / Google Sheets
 ```
 
-Do not duplicate table logic inside workflows.
+Для локального MVP використовується `LocalJsonStore`. Пізніше його можна замінити на `GoogleSheetsStore` без переписування бізнес-логіки.
 
-## Pricing Features
+## Важливі файли
 
-- Percent discount
-- Fixed discount
-- Every N-th order discount
-- Personal client price
-- Warning when final price is below cost
+- `BOT_TEST_INSTRUCTION_UA.txt` - проста інструкція для тестувальника.
+- `START_APP.bat` - запуск веб-кабінету.
+- `START_TELEGRAM_BOT.bat` - запуск Telegram-бота.
+- `STOP_APP.bat` - зупинка веб-кабінету.
+- `STOP_TELEGRAM_BOT.bat` - зупинка Telegram-бота.
+- `documentation/telegram-cakes-demo.md` - сценарії тестування Telegram demo.
+- `documentation/web-onboarding.md` - опис web onboarding.
+- `templates/cakes/demo_data.json` - шаблон demo cakes.
+- `data/local_workspace.json` - локальні тестові дані workspace.
 
-## Error Handling
+## Безпека даних
 
-Use `createUserFacingError()` for safe user messages and manager/debug details.
+Файл `.env`, локальні логи, release-архіви, web auth storage і secret json файли ігноруються через `.gitignore`.
 
+Не комітьте реальні токени, API keys або приватні credentials у репозиторій.
 
-## v12 Customization Layer
+## Статус
 
-This version adds flexible product customizations:
-
-- ProductOptions and OptionGroups
-- OrderItemCustomizations
-- ClientPreferencesHistory
-- Final BOM = base BOM + additions/removals/replacements
-- Customization deltas for cost, price, and work hours
-- Client preferences and restrictions saved for future orders
-
-Examples:
-
-- cakes: add raspberry, remove nuts, add inscription
-- woodworking: add handles, change coating, remove drawer
-
-Business workflows must call `CustomizationService` instead of duplicating customization logic in n8n.
+Це MVP/demo-версія для локального тестування. Вона ще не є публічним production-сайтом в інтернеті.
