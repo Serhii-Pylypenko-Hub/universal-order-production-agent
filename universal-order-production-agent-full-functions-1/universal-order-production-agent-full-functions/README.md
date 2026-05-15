@@ -29,6 +29,16 @@ npm run demo:order
 npm test
 ```
 
+## Web onboarding
+
+```bash
+npm run web:start
+```
+
+Open `http://localhost:3000` to register, connect Telegram/AI/Google resources, run workspace setup, and view the dashboard.
+
+Working documentation is in `documentation/`.
+
 ## Architecture
 
 Telegram / n8n should call these reusable functions instead of duplicating table logic inside workflows.

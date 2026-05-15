@@ -38,7 +38,12 @@ export function calculateDiscount({ basePrice, orderIndex = 1, rules = [], produ
   let appliedRule = null;
 
   for (const rule of rules.filter(r => String(r.is_active) !== "false")) {
-    if (rule.applies_to && rule.applies_to !== "all" && rule.applies_to !== productId && rule.applies_to !== clientId) continue;
+    if (String(rule.applies_to || "").startsWith("amount_over:")) {
+      const minAmount = Number(String(rule.applies_to).split(":")[1]);
+      if (Number(basePrice) < minAmount) continue;
+    } else if (rule.applies_to && rule.applies_to !== "all" && rule.applies_to !== productId && rule.applies_to !== clientId) {
+      continue;
+    }
     if (rule.every_n_order && Number(rule.every_n_order) > 0) {
       if (Number(orderIndex) % Number(rule.every_n_order) !== 0) continue;
     }

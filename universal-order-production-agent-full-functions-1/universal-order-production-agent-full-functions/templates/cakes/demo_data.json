@@ -53,6 +53,26 @@
       "estimated_work_hours": 3,
       "packaging_hours": 0.5,
       "cleanup_buffer": 0.5
+    },
+    {
+      "name": "Carrot Cake",
+      "description": "Carrot cake with cream cheese",
+      "unit": "kg",
+      "base_price": 780,
+      "margin_percent": 30,
+      "estimated_work_hours": 2.5,
+      "packaging_hours": 0.5,
+      "cleanup_buffer": 0.5
+    },
+    {
+      "name": "Cupcake Box",
+      "description": "Box of assorted cupcakes",
+      "unit": "box",
+      "base_price": 600,
+      "margin_percent": 32,
+      "estimated_work_hours": 2,
+      "packaging_hours": 0.5,
+      "cleanup_buffer": 0.3
     }
   ],
   "components": [
@@ -111,6 +131,34 @@
       "unit_cost": 30,
       "stock": 50,
       "min_qty": 10
+    },
+    {
+      "name": "Carrot",
+      "unit": "kg",
+      "unit_cost": 40,
+      "stock": 5,
+      "min_qty": 1
+    },
+    {
+      "name": "Cream Cheese",
+      "unit": "kg",
+      "unit_cost": 210,
+      "stock": 2,
+      "min_qty": 0.7
+    },
+    {
+      "name": "Cupcake Base",
+      "unit": "pcs",
+      "unit_cost": 18,
+      "stock": 48,
+      "min_qty": 12
+    },
+    {
+      "name": "Vanilla",
+      "unit": "kg",
+      "unit_cost": 500,
+      "stock": 0.4,
+      "min_qty": 0.1
     }
   ],
   "bom": [
@@ -163,6 +211,41 @@
       "product": "Napoleon Cake",
       "component": "Cream",
       "qty_per_unit": 0.4
+    },
+    {
+      "product": "Carrot Cake",
+      "component": "Flour",
+      "qty_per_unit": 0.35
+    },
+    {
+      "product": "Carrot Cake",
+      "component": "Sugar",
+      "qty_per_unit": 0.18
+    },
+    {
+      "product": "Carrot Cake",
+      "component": "Carrot",
+      "qty_per_unit": 0.45
+    },
+    {
+      "product": "Carrot Cake",
+      "component": "Cream Cheese",
+      "qty_per_unit": 0.28
+    },
+    {
+      "product": "Cupcake Box",
+      "component": "Cupcake Base",
+      "qty_per_unit": 12
+    },
+    {
+      "product": "Cupcake Box",
+      "component": "Cream",
+      "qty_per_unit": 0.35
+    },
+    {
+      "product": "Cupcake Box",
+      "component": "Vanilla",
+      "qty_per_unit": 0.03
     }
   ],
   "option_groups": [
@@ -184,6 +267,22 @@
     },
     {
       "product": "Berry Cheesecake",
+      "name": "Add-ons",
+      "selection_type": "multi",
+      "is_required": false,
+      "min_select": 0,
+      "max_select": 5
+    },
+    {
+      "product": "Carrot Cake",
+      "name": "Add-ons",
+      "selection_type": "multi",
+      "is_required": false,
+      "min_select": 0,
+      "max_select": 5
+    },
+    {
+      "product": "Cupcake Box",
       "name": "Add-ons",
       "selection_type": "multi",
       "is_required": false,
@@ -221,6 +320,32 @@
     {
       "product": "Chocolate Cake",
       "group": "Add-ons",
+      "name": "Extra chocolate",
+      "type": "add",
+      "component": "Cocoa",
+      "qty_delta": 0.08,
+      "unit": "kg",
+      "price_delta": 100,
+      "cost_delta": 20,
+      "work_hours_delta": 0.05,
+      "description": "More chocolate / cocoa"
+    },
+    {
+      "product": "Chocolate Cake",
+      "group": "Add-ons",
+      "name": "Add nuts",
+      "type": "add",
+      "component": "Nuts",
+      "qty_delta": 0.12,
+      "unit": "kg",
+      "price_delta": 90,
+      "cost_delta": 36,
+      "work_hours_delta": 0.1,
+      "description": "Add nuts"
+    },
+    {
+      "product": "Chocolate Cake",
+      "group": "Add-ons",
       "name": "Add inscription",
       "type": "add",
       "component": "Inscription",
@@ -243,6 +368,32 @@
       "cost_delta": 44,
       "work_hours_delta": 0.1,
       "description": "Extra berries"
+    },
+    {
+      "product": "Carrot Cake",
+      "group": "Add-ons",
+      "name": "Add nuts",
+      "type": "add",
+      "component": "Nuts",
+      "qty_delta": 0.12,
+      "unit": "kg",
+      "price_delta": 90,
+      "cost_delta": 36,
+      "work_hours_delta": 0.1,
+      "description": "Add nuts to carrot cake"
+    },
+    {
+      "product": "Cupcake Box",
+      "group": "Add-ons",
+      "name": "Add inscription",
+      "type": "add",
+      "component": "Inscription",
+      "qty_delta": 1,
+      "unit": "pcs",
+      "price_delta": 80,
+      "cost_delta": 30,
+      "work_hours_delta": 0.1,
+      "description": "Add text inscription to cupcake box"
     }
   ]
 }

@@ -12,6 +12,7 @@ import { getFailedOperationsSummary } from "../utils/retryService.js";
 import { runDeadlineCheck } from "../tasks/deadlineMonitorService.js";
 import { healthCheckWorkspace } from "../setup/healthCheck.js";
 import { nowIso } from "../utils/time.js";
+import { createDiscountRule } from "../pricing/discountService.js";
 
 // Inline keyboards for Telegram
 function ordersKeyboard() {
@@ -48,6 +49,19 @@ export async function handleManagerCommand(command, args = []) {
 
     case "/orders":
       return formatOrdersList(getActiveOrders());
+
+    case "/products":
+      return formatProducts(getRows("Products"));
+
+    case "/components":
+      return formatComponents(getRows("Components"));
+
+    case "/recipe":
+    case "/bom": {
+      const query = args.join(" ");
+      if (!query) return { text: "Використання: /recipe <назва продукту або product_id>" };
+      return formatRecipe(query);
+    }
 
     case "/order": {
       const order = getOrder(args[0]);
@@ -170,6 +184,61 @@ export async function handleManagerCommand(command, args = []) {
       return { text: needsReview.map(o => `🔍 ${o.order_id}: рек. ціна ${o.recommended_new_price || "?"} (поточна: ${o.proposed_price})`).join("\n") };
     }
 
+    case "/discounts":
+      return formatDiscountRules(getRows("DiscountRules"));
+
+    case "/discount_every_n": {
+      const [n, percent] = args;
+      if (!n || !percent) return { text: "Використання: /discount_every_n <кожне_N_замовлення> <відсоток>" };
+      const rule = createDiscountRule({
+        name: `Every ${n} order ${percent}%`,
+        type: "percent",
+        value: Number(percent),
+        everyNOrder: Number(n),
+        appliesTo: "all",
+        isActive: true
+      });
+      return { text: `✅ Знижку створено: кожне ${n}-те замовлення, ${percent}% (${rule.discount_rule_id})` };
+    }
+
+    case "/discount_over_amount": {
+      const [amount, percent] = args;
+      if (!amount || !percent) return { text: "Використання: /discount_over_amount <сума> <відсоток>" };
+      const rule = createDiscountRule({
+        name: `Over ${amount} UAH ${percent}%`,
+        type: "percent",
+        value: Number(percent),
+        appliesTo: `amount_over:${Number(amount)}`,
+        isActive: true
+      });
+      return { text: `✅ Знижку створено: від ${amount} грн, ${percent}% (${rule.discount_rule_id})` };
+    }
+
+    case "/discount_disable": {
+      const [ruleId] = args;
+      if (!ruleId) return { text: "Використання: /discount_disable <discount_rule_id>" };
+      const updated = updateRow("DiscountRules", "discount_rule_id", ruleId, { is_active: false, updated_at: nowIso() });
+      if (!updated) return { text: `Знижку ${ruleId} не знайдено.` };
+      return { text: `✅ Знижку вимкнено: ${ruleId}` };
+    }
+
+    case "/set_order_price": {
+      const [orderId, price, ...reasonParts] = args;
+      if (!orderId || !price) return { text: "Використання: /set_order_price <order_id> <ціна> [причина]" };
+      const order = getOrder(orderId);
+      if (!order) return { text: `Замовлення ${orderId} не знайдено.` };
+      const reason = reasonParts.join(" ") || "manual manager price";
+      updateRow("Orders", "order_id", orderId, {
+        proposed_price: Number(price),
+        final_price: Number(price),
+        pricing_source: "manager_manual",
+        manager_decision: reason,
+        price_review_status: "ManagerSetPrice",
+        updated_at: nowIso()
+      });
+      return { text: `✅ Власну ціну для ${orderId} встановлено: ${price} грн. Причина: ${reason}` };
+    }
+
     case "/approve_price": {
       const [orderId] = args;
       updateRow("Orders", "order_id", orderId, { price_review_status: "ApprovedUseNewPrice", manager_decision: "approved", updated_at: nowIso() });
@@ -237,6 +306,74 @@ function formatOrdersList(orders) {
     `📦 ${o.order_id} | ${o.status} | ${o.proposed_price || "?"}грн`
   );
   return { text: `<b>Активні замовлення (${orders.length}):</b>\n${lines.join("\n")}` };
+}
+
+function formatProducts(products) {
+  if (!products.length) return { text: "Продуктів немає. Запустіть demo workspace або додайте продукти." };
+  return {
+    text: "<b>Продукти:</b>\n" + products
+      .filter(p => p.is_active !== false)
+      .map(p => `• ${p.product_id} | ${p.name} | ${p.base_price || "?"} грн / ${p.unit || "од."}`)
+      .join("\n")
+  };
+}
+
+function formatComponents(components) {
+  if (!components.length) return { text: "Компонентів немає. Запустіть demo workspace або додайте матеріали." };
+  return {
+    text: "<b>Матеріали:</b>\n" + components
+      .filter(c => c.is_active !== false)
+      .map(c => `• ${c.component_id} | ${c.name} | ${c.unit_cost || "?"} грн / ${c.unit || "од."}`)
+      .join("\n")
+  };
+}
+
+function formatRecipe(query) {
+  const products = getRows("Products");
+  const product = products.find(p =>
+    p.product_id === query ||
+    p.name?.toLowerCase() === query.toLowerCase()
+  );
+  if (!product) return { text: `Продукт не знайдено: ${query}. Спробуйте /products.` };
+
+  const components = new Map(getRows("Components").map(c => [c.component_id, c]));
+  const stock = new Map(getRows("Stock").map(s => [s.component_id, s]));
+  const rows = findRows("ProductComponents", r => r.product_id === product.product_id);
+  if (!rows.length) return { text: `Для ${product.name} рецепт/BOM ще не заповнений.` };
+
+  const lines = rows.map(row => {
+    const component = components.get(row.component_id);
+    const stockRow = stock.get(row.component_id);
+    const available = stockRow
+      ? Number(stockRow.current_qty || 0) - Number(stockRow.reserved_qty || 0)
+      : 0;
+    return `• ${component?.name || row.component_id}: ${row.qty_per_unit} ${row.unit || component?.unit || ""} на ${product.unit}; залишок ${available} ${stockRow?.unit || component?.unit || ""}`;
+  });
+
+  return {
+    text: [
+      `<b>Рецепт: ${product.name}</b>`,
+      `Ціна: ${product.base_price || "?"} грн / ${product.unit || "од."}`,
+      "",
+      ...lines
+    ].join("\n")
+  };
+}
+
+function formatDiscountRules(rules) {
+  if (!rules.length) return { text: "Знижок ще немає. Створіть /discount_over_amount або /discount_every_n." };
+  return {
+    text: "<b>Знижки:</b>\n" + rules.map(rule => {
+      const status = String(rule.is_active) === "false" ? "вимкнена" : "активна";
+      const scope = String(rule.applies_to || "").startsWith("amount_over:")
+        ? `від ${String(rule.applies_to).split(":")[1]} грн`
+        : rule.every_n_order
+          ? `кожне ${rule.every_n_order}-те замовлення`
+          : rule.applies_to || "all";
+      const value = rule.type === "percent" ? `${rule.value}%` : `${rule.value} грн`;
+      return `• ${rule.discount_rule_id} | ${status} | ${value} | ${scope}`;
+    }).join("\n")
+  };
 }
 
 function formatOrderDetails(order) {

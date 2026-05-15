@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Operations Setup</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="auth-view" id="authView">
+        <div class="brand-panel">
+          <div class="brand-top">
+            <p class="eyebrow">AI Operations MVP</p>
+            <div class="lang-switch" role="group" aria-label="Language">
+              <button class="lang-button active" type="button" data-lang="uk">UA</button>
+              <button class="lang-button" type="button" data-lang="en">EN</button>
+            </div>
+          </div>
+          <h1 data-i18n="heroTitle">Робочий кабінет виробництва</h1>
+          <p class="lead" data-i18n="heroLead">Реєстрація, підключення Telegram, AI, Google ресурсів і запуск workspace в одному місці.</p>
+          <div class="status-strip">
+            <span>Local JSON</span>
+            <span>Telegram</span>
+            <span>OpenRouter</span>
+            <span>Google Sheets</span>
+          </div>
+        </div>
+
+        <div class="auth-card">
+          <div class="tabs" role="tablist">
+            <button class="tab active" id="registerTab" type="button" data-i18n="registerTab">Реєстрація</button>
+            <button class="tab" id="loginTab" type="button" data-i18n="loginTab">Вхід</button>
+          </div>
+
+          <form id="registerForm" class="form">
+            <label><span data-i18n="nameLabel">Ім'я</span>
+              <input name="name" autocomplete="name" required minlength="2">
+            </label>
+            <label><span data-i18n="emailLabel">Пошта</span>
+              <input name="email" type="email" autocomplete="email" required>
+            </label>
+            <label><span data-i18n="passwordLabel">Пароль</span>
+              <input name="password" type="password" autocomplete="new-password" required minlength="8">
+            </label>
+            <button class="primary" type="submit" data-i18n="createAccount">Створити акаунт</button>
+          </form>
+
+          <form id="loginForm" class="form hidden">
+            <label><span data-i18n="emailLabel">Пошта</span>
+              <input name="email" type="email" autocomplete="email" required>
+            </label>
+            <label><span data-i18n="passwordLabel">Пароль</span>
+              <input name="password" type="password" autocomplete="current-password" required>
+            </label>
+            <button class="primary" type="submit" data-i18n="signIn">Увійти</button>
+          </form>
+          <p class="message" id="authMessage"></p>
+        </div>
+      </section>
+
+      <section class="app-view hidden" id="appView">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Setup Wizard</p>
+            <h1 data-i18n="appTitle">Підключення і контроль</h1>
+          </div>
+          <div class="user-box">
+            <div class="lang-switch" role="group" aria-label="Language">
+              <button class="lang-button active" type="button" data-lang="uk">UA</button>
+              <button class="lang-button" type="button" data-lang="en">EN</button>
+            </div>
+            <span id="userLabel"></span>
+            <button class="secondary" id="logoutButton" type="button" data-i18n="logout">Вийти</button>
+          </div>
+        </header>
+
+        <section class="grid">
+          <form class="panel connections" id="connectionsForm">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow" data-i18n="stepOne">Крок 1</p>
+                <h2 data-i18n="resourcesTitle">Ресурси</h2>
+              </div>
+              <button class="primary" type="submit" data-i18n="save">Зберегти</button>
+            </div>
+            <div class="demo-note">
+              <strong data-i18n="demoRequiredTitle">Для локального демо ключі не потрібні.</strong>
+              <span data-i18n="demoRequiredText">Для демо з Telegram та AI заповніть підсвічені поля.</span>
+              <span data-i18n="autoSaveNote">Кнопка "Запустити демо" також автоматично збереже введені поля.</span>
+              <span data-i18n="secretSaveNote">Після збереження token та API key очищаються на екрані, але мають показати статус "збережено".</span>
+            </div>
+
+            <div class="field-grid">
+              <label class="is-required"><span>Telegram bot token <em data-i18n="requiredBadge">обов'язково</em></span>
+                <input name="TELEGRAM_BOT_TOKEN" placeholder="123456:ABC...">
+              </label>
+              <label class="is-required"><span>Manager chat ID <em data-i18n="requiredBadge">обов'язково</em></span>
+                <input name="MANAGER_CHAT_ID" placeholder="123456789">
+              </label>
+              <label><span>Webhook secret</span>
+                <input name="TELEGRAM_WEBHOOK_SECRET" placeholder="random-secret">
+              </label>
+              <label><span>Bot mode</span>
+                <select name="BOT_MODE">
+                  <option value="polling">polling</option>
+                  <option value="webhook">webhook</option>
+                </select>
+              </label>
+              <label><span>Webhook URL</span>
+                <input name="WEBHOOK_URL" placeholder="https://domain.com/webhook">
+              </label>
+              <label class="is-required"><span>OpenRouter API key <em data-i18n="requiredBadge">обов'язково</em></span>
+                <input name="OPENROUTER_API_KEY" placeholder="sk-or-...">
+              </label>
+              <label><span>AI model</span>
+                <input name="AI_MODEL" value="openai/gpt-4o-mini">
+              </label>
+              <label><span>Google Sheets ID</span>
+                <input name="GOOGLE_SHEETS_ID" placeholder="spreadsheet id">
+              </label>
+              <label><span>Google service JSON base64</span>
+                <input name="GOOGLE_SERVICE_ACCOUNT_JSON" placeholder="base64 json">
+              </label>
+              <label><span>Google key file</span>
+                <input name="GOOGLE_SERVICE_ACCOUNT_KEY_FILE" placeholder="./credentials.json">
+              </label>
+              <label><span>Google Calendar ID</span>
+                <input name="GOOGLE_CALENDAR_ID" placeholder="calendar id">
+              </label>
+              <label><span>Local data path</span>
+                <input name="LOCAL_DATA_PATH" value="./data/local_workspace.json">
+              </label>
+            </div>
+            <p class="message" id="connectionsMessage"></p>
+          </form>
+
+          <aside class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow" data-i18n="stepTwo">Крок 2</p>
+                <h2>Workspace</h2>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" id="setupDemoButton" type="button" data-i18n="setupDemo">Запустити демо</button>
+              <button class="secondary" id="createDemoOrderButton" type="button" data-i18n="createDemoOrder">Створити тестове замовлення</button>
+              <button class="secondary" id="setupEmptyButton" type="button" data-i18n="setupEmpty">Порожній workspace</button>
+              <button class="secondary" id="refreshButton" type="button" data-i18n="refresh">Оновити</button>
+            </div>
+            <p class="message" id="workspaceMessage"></p>
+            <div class="demo-readiness" id="demoReadiness"></div>
+            <div class="health" id="healthBox"></div>
+          </aside>
+        </section>
+
+        <section class="panel dashboard">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow" data-i18n="operations">Операції</p>
+              <h2 data-i18n="currentState">Поточний стан</h2>
+            </div>
+          </div>
+          <div class="metrics" id="metrics"></div>
+          <div class="tables">
+            <div>
+              <h3 data-i18n="recentOrders">Останні замовлення</h3>
+              <div id="ordersList" class="list"></div>
+            </div>
+            <div>
+              <h3 data-i18n="lowStockTitle">Низькі залишки</h3>
+              <div id="stockList" class="list"></div>
+            </div>
+            <div>
+              <h3 data-i18n="demoProducts">Demo-продукти</h3>
+              <div id="productsList" class="list"></div>
+            </div>
+            <div>
+              <h3 data-i18n="testStock">Тестові залишки</h3>
+              <div id="allStockList" class="list"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

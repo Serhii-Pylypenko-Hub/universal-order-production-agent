@@ -10,6 +10,8 @@
     "health": "node app/js/setup/healthCheck.js",
     "demo:order": "node app/js/orders/demoCreateOrder.js",
     "test": "node tests/runLocalTests.js",
+    "test:web": "node tests/runWebTests.js",
+    "web:start": "node app/js/web/server.js",
     "demo:error": "node examples/demoErrorHandling.js",
     "demo:pricing": "node examples/demoPricingRules.js",
     "code:map": "cat docs/CODE_MAP.md",

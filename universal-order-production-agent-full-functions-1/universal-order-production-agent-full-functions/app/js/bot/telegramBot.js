@@ -5,6 +5,7 @@ import { createWebhookServer, registerWebhook } from "./webhookHandler.js";
 import { routeMessage, routeCallbackQuery } from "./messageRouter.js";
 import { runDeadlineCheck } from "../tasks/deadlineMonitorService.js";
 import { sendManagerAlert } from "../tasks/notificationService.js";
+import { loadEnvFile } from "../web/envConfig.js";
 
 // --- Telegram long-polling (development mode) ---
 
@@ -36,13 +37,46 @@ async function getUpdates() {
   });
 }
 
+function telegramGet(method) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  return new Promise(resolve => {
+    const opts = {
+      hostname: "api.telegram.org",
+      path: `/bot${token}/${method}`,
+      method: "GET"
+    };
+    const req = https.request(opts, res => {
+      let raw = "";
+      res.on("data", c => raw += c);
+      res.on("end", () => {
+        try { resolve(JSON.parse(raw)); }
+        catch { resolve({ ok: false, raw }); }
+      });
+    });
+    req.on("error", err => resolve({ ok: false, error: err.message }));
+    req.end();
+  });
+}
+
+async function resetWebhookForPolling() {
+  const result = await telegramGet("deleteWebhook?drop_pending_updates=false");
+  console.log("[telegramBot] deleteWebhook:", JSON.stringify(result));
+}
+
 async function pollLoop() {
   while (pollingActive) {
     try {
       const data = await getUpdates();
+      if (!data.ok) {
+        console.error("[telegramBot] getUpdates failed:", JSON.stringify(data));
+      }
       if (data.ok && data.result?.length) {
+        console.log(`[telegramBot] Received ${data.result.length} update(s).`);
         for (const update of data.result) {
           pollingOffset = update.update_id + 1;
+          if (update.message?.text) {
+            console.log(`[telegramBot] Message from ${update.message.chat?.id}: ${update.message.text}`);
+          }
           if (update.message) await routeMessage(update.message).catch(console.error);
           if (update.callback_query) await routeCallbackQuery(update.callback_query).catch(console.error);
         }
@@ -57,6 +91,7 @@ async function pollLoop() {
 // --- Bot startup ---
 
 export async function startBot(options = {}) {
+  loadEnvFile();
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not configured.");
 
@@ -75,6 +110,7 @@ export async function startBot(options = {}) {
     console.log("[telegramBot] Webhook registered:", result.description);
   } else {
     // Polling mode (development)
+    await resetWebhookForPolling();
     pollingActive = true;
     console.log("[telegramBot] Starting long-polling...");
     pollLoop();
