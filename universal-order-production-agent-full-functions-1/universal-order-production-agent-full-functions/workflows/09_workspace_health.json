@@ -1,0 +1,74 @@
+{
+  "name": "09 Workspace Health",
+  "active": false,
+  "nodes": [
+    {
+      "id": "daily-cron",
+      "name": "Daily Health Check",
+      "type": "n8n-nodes-base.cron",
+      "position": [100, 300],
+      "parameters": { "cronExpression": "0 9 * * *" }
+    },
+    {
+      "id": "health-check",
+      "name": "Run Health Check",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 300],
+      "parameters": {
+        "functionCode": "// Calls: healthCheckWorkspace()\n// Checks: Telegram, AI, Google Sheets, Calendar, Products, BOM, Stock\nconst { healthCheckWorkspace } = require('./app/js/setup/healthCheck.js');\nconst result = await healthCheckWorkspace();\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "check-ready",
+      "name": "Ready for Orders?",
+      "type": "n8n-nodes-base.if",
+      "position": [500, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.ready_for_orders }}", "operation": "equal", "value2": true }]
+        }
+      }
+    },
+    {
+      "id": "all-ok",
+      "name": "System OK",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 200],
+      "parameters": {
+        "functionCode": "const { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst h = $input.first().json;\nawait sendManagerAlert(`✅ Система готова до роботи (${h.checked_at?.substring(0,10)})`);\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "issues-found",
+      "name": "Report Issues",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 400],
+      "parameters": {
+        "functionCode": "const { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst h = $input.first().json;\nconst issues = [];\nif (!h.telegram?.connected) issues.push('❌ Telegram не підключено');\nif (!h.ai?.connected) issues.push('❌ AI API не підключено');\nif (!h.products_filled) issues.push('⚠️ Товари не заповнені');\nif (!h.bom_complete) issues.push('⚠️ BOM не заповнено');\nif (!h.stock_filled) issues.push('⚠️ Склад порожній');\nawait sendManagerAlert('⚠️ Проблеми системи:\\n' + issues.join('\\n'));\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "failed-ops-report",
+      "name": "Failed Operations Report",
+      "type": "n8n-nodes-base.function",
+      "position": [900, 300],
+      "parameters": {
+        "functionCode": "const { getFailedOperationsSummary } = require('./app/js/utils/retryService.js');\nconst { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst summary = getFailedOperationsSummary();\nif (summary.failed > 0) {\n  await sendManagerAlert(`⚠️ Неопрацьовані помилки: ${summary.failed} (очікують: ${summary.pending})`);\n}\nreturn [{ json: summary }];"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Health Check": { "main": [[{ "node": "Run Health Check", "type": "main", "index": 0 }]] },
+    "Run Health Check": { "main": [[{ "node": "Ready for Orders?", "type": "main", "index": 0 }]] },
+    "Ready for Orders?": {
+      "main": [
+        [{ "node": "System OK", "type": "main", "index": 0 }],
+        [{ "node": "Report Issues", "type": "main", "index": 0 }]
+      ]
+    },
+    "System OK": { "main": [[{ "node": "Failed Operations Report", "type": "main", "index": 0 }]] },
+    "Report Issues": { "main": [[{ "node": "Failed Operations Report", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "saveManualExecutions": true },
+  "tags": ["health", "monitoring"]
+}

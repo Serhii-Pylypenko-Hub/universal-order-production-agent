@@ -1,0 +1,1433 @@
+{
+  "SystemMeta": {
+    "columns": [
+      "key",
+      "value",
+      "updated_at"
+    ],
+    "rows": [
+      {
+        "key": "schema_version",
+        "value": "0.5.0",
+        "updated_at": "2026-05-15T13:11:52.923Z"
+      },
+      {
+        "key": "initialized_at",
+        "value": "2026-05-15T13:11:52.927Z",
+        "updated_at": "2026-05-15T13:11:52.927Z"
+      },
+      {
+        "key": "business_template",
+        "value": "cakes",
+        "updated_at": "2026-05-15T13:11:52.929Z"
+      }
+    ]
+  },
+  "Settings": {
+    "columns": [
+      "key",
+      "value",
+      "type",
+      "description"
+    ],
+    "rows": [
+      {
+        "key": "business_name",
+        "value": "Demo Cakes",
+        "type": "string",
+        "description": "demo setting"
+      },
+      {
+        "key": "currency",
+        "value": "UAH",
+        "type": "string",
+        "description": "demo setting"
+      },
+      {
+        "key": "work_start",
+        "value": "09:00",
+        "type": "string",
+        "description": "demo setting"
+      },
+      {
+        "key": "lunch_start",
+        "value": "13:00",
+        "type": "string",
+        "description": "demo setting"
+      },
+      {
+        "key": "lunch_end",
+        "value": "14:00",
+        "type": "string",
+        "description": "demo setting"
+      },
+      {
+        "key": "work_end",
+        "value": "18:00",
+        "type": "string",
+        "description": "demo setting"
+      },
+      {
+        "key": "daily_capacity_hours",
+        "value": "8",
+        "type": "number",
+        "description": "demo setting"
+      },
+      {
+        "key": "shipping_buffer_days",
+        "value": "1",
+        "type": "number",
+        "description": "demo setting"
+      },
+      {
+        "key": "cost_change_threshold_percent",
+        "value": "3",
+        "type": "number",
+        "description": "demo setting"
+      },
+      {
+        "key": "critical_cost_change_percent",
+        "value": "10",
+        "type": "number",
+        "description": "demo setting"
+      },
+      {
+        "key": "price_buffer_percent",
+        "value": "5",
+        "type": "number",
+        "description": "demo setting"
+      },
+      {
+        "key": "safety_stock_percent",
+        "value": "10",
+        "type": "number",
+        "description": "demo setting"
+      }
+    ]
+  },
+  "Products": {
+    "columns": [
+      "product_id",
+      "name",
+      "description",
+      "unit",
+      "base_price",
+      "margin_percent",
+      "estimated_work_hours",
+      "packaging_hours",
+      "cleanup_buffer",
+      "is_active",
+      "allow_loss_price"
+    ],
+    "rows": [
+      {
+        "product_id": "PROD-6XSAM6K15PJV",
+        "name": "Chocolate Cake",
+        "description": "Chocolate demo cake",
+        "unit": "kg",
+        "base_price": 900,
+        "margin_percent": 30,
+        "estimated_work_hours": 3,
+        "packaging_hours": 0.5,
+        "cleanup_buffer": 0.5,
+        "is_active": true
+      },
+      {
+        "product_id": "PROD-6XSAM8QJG71R",
+        "name": "Honey Cake",
+        "description": "Honey demo cake",
+        "unit": "kg",
+        "base_price": 800,
+        "margin_percent": 28,
+        "estimated_work_hours": 2.5,
+        "packaging_hours": 0.5,
+        "cleanup_buffer": 0.5,
+        "is_active": true
+      },
+      {
+        "product_id": "PROD-6XSAMB1OAWE2",
+        "name": "Berry Cheesecake",
+        "description": "Berry demo cake",
+        "unit": "kg",
+        "base_price": 1000,
+        "margin_percent": 35,
+        "estimated_work_hours": 3.5,
+        "packaging_hours": 0.5,
+        "cleanup_buffer": 0.5,
+        "is_active": true
+      },
+      {
+        "product_id": "PROD-6XSAMFLQMV1A",
+        "name": "Napoleon Cake",
+        "description": "Napoleon demo cake",
+        "unit": "kg",
+        "base_price": 850,
+        "margin_percent": 30,
+        "estimated_work_hours": 3,
+        "packaging_hours": 0.5,
+        "cleanup_buffer": 0.5,
+        "is_active": true
+      }
+    ]
+  },
+  "Components": {
+    "columns": [
+      "component_id",
+      "name",
+      "unit",
+      "unit_cost",
+      "is_active"
+    ],
+    "rows": [
+      {
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "name": "Flour",
+        "unit": "kg",
+        "unit_cost": 35,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "name": "Sugar",
+        "unit": "kg",
+        "unit_cost": 45,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "name": "Cocoa",
+        "unit": "kg",
+        "unit_cost": 250,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "name": "Cream",
+        "unit": "kg",
+        "unit_cost": 180,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSAN6U68YRF",
+        "name": "Berries",
+        "unit": "kg",
+        "unit_cost": 220,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSANBNY8P8N",
+        "name": "Raspberry",
+        "unit": "kg",
+        "unit_cost": 260,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSANGYUDOHS",
+        "name": "Nuts",
+        "unit": "kg",
+        "unit_cost": 300,
+        "is_active": true
+      },
+      {
+        "component_id": "COMP-6XSANK3UAQMB",
+        "name": "Inscription",
+        "unit": "pcs",
+        "unit_cost": 30,
+        "is_active": true
+      }
+    ]
+  },
+  "ProductComponents": {
+    "columns": [
+      "product_component_id",
+      "product_id",
+      "component_id",
+      "qty_per_unit",
+      "unit"
+    ],
+    "rows": [
+      {
+        "product_component_id": "BOM-6XSANOV2CA0R",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "qty_per_unit": 0.45,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSANSFYHTJB",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "qty_per_unit": 0.25,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSANVT55K20",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "qty_per_unit": 0.1,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSANX4Z84PA",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "qty_per_unit": 0.35,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSAO0L5A1VN",
+        "product_id": "PROD-6XSAMB1OAWE2",
+        "component_id": "COMP-6XSAN6U68YRF",
+        "qty_per_unit": 0.3,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSAO2O82AXU",
+        "product_id": "PROD-6XSAMB1OAWE2",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "qty_per_unit": 0.45,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSAO59F4STC",
+        "product_id": "PROD-6XSAM8QJG71R",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "qty_per_unit": 0.4,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSAO9NT8NPI",
+        "product_id": "PROD-6XSAM8QJG71R",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "qty_per_unit": 0.2,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSAOBM3R6VC",
+        "product_id": "PROD-6XSAMFLQMV1A",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "qty_per_unit": 0.5,
+        "unit": "kg"
+      },
+      {
+        "product_component_id": "BOM-6XSAOEYIEM0D",
+        "product_id": "PROD-6XSAMFLQMV1A",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "qty_per_unit": 0.4,
+        "unit": "kg"
+      }
+    ]
+  },
+  "Stock": {
+    "columns": [
+      "stock_id",
+      "component_id",
+      "current_qty",
+      "reserved_qty",
+      "unit",
+      "min_qty",
+      "unit_cost"
+    ],
+    "rows": [
+      {
+        "stock_id": "STOCK-6XSAMM55IVIF",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "current_qty": 10,
+        "reserved_qty": 0.9,
+        "unit": "kg",
+        "min_qty": 2,
+        "unit_cost": 35
+      },
+      {
+        "stock_id": "STOCK-6XSAMTC60BFF",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "current_qty": 8,
+        "reserved_qty": 0.5,
+        "unit": "kg",
+        "min_qty": 2,
+        "unit_cost": 45
+      },
+      {
+        "stock_id": "STOCK-6XSAMZEYZ36L",
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "current_qty": 1.5,
+        "reserved_qty": 0.2,
+        "unit": "kg",
+        "min_qty": 0.5,
+        "unit_cost": 250
+      },
+      {
+        "stock_id": "STOCK-6XSAN3Q45NCB",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "current_qty": 3,
+        "reserved_qty": 0.7,
+        "unit": "kg",
+        "min_qty": 1,
+        "unit_cost": 180
+      },
+      {
+        "stock_id": "STOCK-6XSAN84A3GJ9",
+        "component_id": "COMP-6XSAN6U68YRF",
+        "current_qty": 2,
+        "reserved_qty": 0,
+        "unit": "kg",
+        "min_qty": 1,
+        "unit_cost": 220
+      },
+      {
+        "stock_id": "STOCK-6XSANDZ5SH3Q",
+        "component_id": "COMP-6XSANBNY8P8N",
+        "current_qty": 1.5,
+        "reserved_qty": 0.2,
+        "unit": "kg",
+        "min_qty": 0.5,
+        "unit_cost": 260
+      },
+      {
+        "stock_id": "STOCK-6XSANIQXCD21",
+        "component_id": "COMP-6XSANGYUDOHS",
+        "current_qty": 1,
+        "reserved_qty": 0,
+        "unit": "kg",
+        "min_qty": 0.3,
+        "unit_cost": 300
+      },
+      {
+        "stock_id": "STOCK-6XSANMAIULRG",
+        "component_id": "COMP-6XSANK3UAQMB",
+        "current_qty": 50,
+        "reserved_qty": 1,
+        "unit": "pcs",
+        "min_qty": 10,
+        "unit_cost": 30
+      }
+    ]
+  },
+  "InventoryTransactions": {
+    "columns": [
+      "transaction_id",
+      "component_id",
+      "type",
+      "qty",
+      "unit",
+      "order_id",
+      "reason",
+      "created_at"
+    ],
+    "rows": [
+      {
+        "transaction_id": "INV-6XSAQVRBTTPR",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "type": "RESERVE",
+        "qty": 0.45,
+        "unit": "kg",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.191Z"
+      },
+      {
+        "transaction_id": "INV-6XSAR48PUAB9",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "type": "RESERVE",
+        "qty": 0.25,
+        "unit": "kg",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.200Z"
+      },
+      {
+        "transaction_id": "INV-6XSARF6OIXVT",
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "type": "RESERVE",
+        "qty": 0.1,
+        "unit": "kg",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.211Z"
+      },
+      {
+        "transaction_id": "INV-6XSARP6G2XMI",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "type": "RESERVE",
+        "qty": 0.35,
+        "unit": "kg",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.221Z"
+      },
+      {
+        "transaction_id": "INV-6XSARX5QJJSO",
+        "component_id": "COMP-6XSANBNY8P8N",
+        "type": "RESERVE",
+        "qty": 0.2,
+        "unit": "kg",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.229Z"
+      },
+      {
+        "transaction_id": "INV-6XSAS6ECEBAR",
+        "component_id": "COMP-6XSANK3UAQMB",
+        "type": "RESERVE",
+        "qty": 1,
+        "unit": "pcs",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.238Z"
+      },
+      {
+        "transaction_id": "INV-6XSAU45K7TDA",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "type": "RESERVE",
+        "qty": 0.45,
+        "unit": "kg",
+        "order_id": "ORD-6XSATKIWECCR",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.308Z"
+      },
+      {
+        "transaction_id": "INV-6XSAUF7898E6",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "type": "RESERVE",
+        "qty": 0.25,
+        "unit": "kg",
+        "order_id": "ORD-6XSATKIWECCR",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.319Z"
+      },
+      {
+        "transaction_id": "INV-6XSAURRTXB7T",
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "type": "RESERVE",
+        "qty": 0.1,
+        "unit": "kg",
+        "order_id": "ORD-6XSATKIWECCR",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.331Z"
+      },
+      {
+        "transaction_id": "INV-6XSAV2OGU589",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "type": "RESERVE",
+        "qty": 0.35,
+        "unit": "kg",
+        "order_id": "ORD-6XSATKIWECCR",
+        "reason": "order reservation",
+        "created_at": "2026-05-15T13:11:53.342Z"
+      }
+    ]
+  },
+  "Clients": {
+    "columns": [
+      "client_id",
+      "name",
+      "contact",
+      "preferences",
+      "restrictions_or_allergies",
+      "created_at",
+      "updated_at",
+      "order_history_summary",
+      "last_order_at"
+    ],
+    "rows": [
+      {
+        "client_id": "CLI-6XSAPKVCP18K",
+        "name": "Test Client",
+        "contact": "+380111111111",
+        "preferences": "",
+        "restrictions_or_allergies": "без горіхів",
+        "created_at": "2026-05-15T13:11:53.144Z",
+        "updated_at": "2026-05-15T13:11:53.296Z",
+        "order_history_summary": "preferences: більше ягід | restriction_or_allergy: без горіхів | customization: Add raspberry; Remove nuts; Add inscription"
+      }
+    ]
+  },
+  "Orders": {
+    "columns": [
+      "order_id",
+      "client_id",
+      "status",
+      "payment_status",
+      "delivery_method",
+      "desired_date",
+      "ready_date",
+      "shipping_date",
+      "estimated_cost_snapshot",
+      "actual_cost",
+      "proposed_price",
+      "recommended_new_price",
+      "price_review_status",
+      "manager_decision",
+      "created_at",
+      "updated_at",
+      "discount_amount",
+      "discount_rule_id",
+      "final_price",
+      "price_warning",
+      "order_index_for_client",
+      "pricing_source",
+      "event_id"
+    ],
+    "rows": [
+      {
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "client_id": "CLI-6XSAPKVCP18K",
+        "status": "Scheduled",
+        "payment_status": "AwaitingPayment",
+        "delivery_method": "pickup",
+        "desired_date": "2026-05-15T13:11:53.140Z",
+        "ready_date": "2026-05-15T13:00:00.000Z",
+        "shipping_date": "2026-05-16T13:00:00.000Z",
+        "estimated_cost_snapshot": 167,
+        "actual_cost": "",
+        "proposed_price": 417.1,
+        "discount_amount": 0,
+        "discount_rule_id": "",
+        "final_price": 417.1,
+        "price_warning": "",
+        "order_index_for_client": 1,
+        "pricing_source": "base",
+        "event_id": "evt-1",
+        "recommended_new_price": "",
+        "price_review_status": "NotRequired",
+        "manager_decision": "",
+        "created_at": "2026-05-15T13:11:53.158Z",
+        "updated_at": "2026-05-15T13:11:53.255Z"
+      },
+      {
+        "order_id": "ORD-6XSATKIWECCR",
+        "client_id": "CLI-6XSAPKVCP18K",
+        "status": "Scheduled",
+        "payment_status": "AwaitingPayment",
+        "delivery_method": "pickup",
+        "desired_date": "2026-05-15T13:11:53.272Z",
+        "ready_date": "2026-05-15T17:00:00.000Z",
+        "shipping_date": "2026-05-16T17:00:00.000Z",
+        "estimated_cost_snapshot": 115,
+        "actual_cost": "",
+        "proposed_price": 134.55,
+        "discount_amount": 14.95,
+        "discount_rule_id": "DISC-6XSAPEC3XG0U",
+        "final_price": 134.55,
+        "price_warning": "",
+        "order_index_for_client": 2,
+        "pricing_source": "discount",
+        "event_id": "evt-2",
+        "recommended_new_price": "",
+        "price_review_status": "NotRequired",
+        "manager_decision": "",
+        "created_at": "2026-05-15T13:11:53.288Z",
+        "updated_at": "2026-05-15T13:11:53.361Z"
+      }
+    ]
+  },
+  "OrderItems": {
+    "columns": [
+      "order_item_id",
+      "order_id",
+      "product_id",
+      "quantity",
+      "unit",
+      "customization_summary",
+      "base_cost",
+      "customization_cost_delta",
+      "customization_price_delta",
+      "customization_work_hours_delta"
+    ],
+    "rows": [
+      {
+        "order_item_id": "OI-6XSAQ20RQPXP",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "quantity": 1,
+        "unit": "kg",
+        "customization_summary": "Add raspberry; Remove nuts; Add inscription",
+        "base_cost": 115,
+        "customization_cost_delta": 52,
+        "customization_price_delta": 200,
+        "customization_work_hours_delta": 0.2
+      },
+      {
+        "order_item_id": "OI-6XSATNJC19TU",
+        "order_id": "ORD-6XSATKIWECCR",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "quantity": 1,
+        "unit": "kg",
+        "customization_summary": "",
+        "base_cost": 115,
+        "customization_cost_delta": 0,
+        "customization_price_delta": 0,
+        "customization_work_hours_delta": 0
+      }
+    ]
+  },
+  "Reservations": {
+    "columns": [
+      "reservation_id",
+      "order_id",
+      "component_id",
+      "reserved_qty",
+      "unit",
+      "status",
+      "created_at",
+      "updated_at"
+    ],
+    "rows": [
+      {
+        "reservation_id": "RES-6XSAQTL57K7U",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "reserved_qty": 0.45,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.189Z",
+        "updated_at": "2026-05-15T13:11:53.189Z"
+      },
+      {
+        "reservation_id": "RES-6XSAR26RY1NS",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "reserved_qty": 0.25,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.198Z",
+        "updated_at": "2026-05-15T13:11:53.198Z"
+      },
+      {
+        "reservation_id": "RES-6XSARCKJMY2N",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "reserved_qty": 0.1,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.208Z",
+        "updated_at": "2026-05-15T13:11:53.208Z"
+      },
+      {
+        "reservation_id": "RES-6XSARNXOBYD4",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "reserved_qty": 0.35,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.219Z",
+        "updated_at": "2026-05-15T13:11:53.219Z"
+      },
+      {
+        "reservation_id": "RES-6XSARVF4UPK4",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "component_id": "COMP-6XSANBNY8P8N",
+        "reserved_qty": 0.2,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.227Z",
+        "updated_at": "2026-05-15T13:11:53.227Z"
+      },
+      {
+        "reservation_id": "RES-6XSAS33S7XZJ",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "component_id": "COMP-6XSANK3UAQMB",
+        "reserved_qty": 1,
+        "unit": "pcs",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.235Z",
+        "updated_at": "2026-05-15T13:11:53.235Z"
+      },
+      {
+        "reservation_id": "RES-6XSAU15GI5VA",
+        "order_id": "ORD-6XSATKIWECCR",
+        "component_id": "COMP-6XSAMI4D0XN2",
+        "reserved_qty": 0.45,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.305Z",
+        "updated_at": "2026-05-15T13:11:53.305Z"
+      },
+      {
+        "reservation_id": "RES-6XSAUCSW46BR",
+        "order_id": "ORD-6XSATKIWECCR",
+        "component_id": "COMP-6XSAMQL6NRJC",
+        "reserved_qty": 0.25,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.316Z",
+        "updated_at": "2026-05-15T13:11:53.316Z"
+      },
+      {
+        "reservation_id": "RES-6XSAUONS0FIW",
+        "order_id": "ORD-6XSATKIWECCR",
+        "component_id": "COMP-6XSAMXIC7SIB",
+        "reserved_qty": 0.1,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.328Z",
+        "updated_at": "2026-05-15T13:11:53.328Z"
+      },
+      {
+        "reservation_id": "RES-6XSAUZ0MRXKN",
+        "order_id": "ORD-6XSATKIWECCR",
+        "component_id": "COMP-6XSAN2MUSSKG",
+        "reserved_qty": 0.35,
+        "unit": "kg",
+        "status": "Reserved",
+        "created_at": "2026-05-15T13:11:53.339Z",
+        "updated_at": "2026-05-15T13:11:53.339Z"
+      }
+    ]
+  },
+  "PurchaseRequests": {
+    "columns": [
+      "purchase_request_id",
+      "status",
+      "created_at",
+      "updated_at"
+    ],
+    "rows": []
+  },
+  "PurchaseRequestItems": {
+    "columns": [
+      "purchase_request_item_id",
+      "purchase_request_id",
+      "component_id",
+      "required_qty",
+      "safety_stock_qty",
+      "total_qty",
+      "unit",
+      "status"
+    ],
+    "rows": []
+  },
+  "Tasks": {
+    "columns": [
+      "task_id",
+      "order_id",
+      "type",
+      "title",
+      "priority",
+      "status",
+      "due_at",
+      "created_at",
+      "updated_at"
+    ],
+    "rows": [
+      {
+        "task_id": "TASK-6XSASQDT4VIN",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "type": "Production",
+        "title": "Почати виробництво",
+        "priority": "INFO",
+        "status": "Open",
+        "due_at": "2026-05-15T09:00:00.000Z",
+        "created_at": "2026-05-15T13:11:53.258Z",
+        "updated_at": "2026-05-15T13:11:53.258Z"
+      },
+      {
+        "task_id": "TASK-6XSAVOXXPHRC",
+        "order_id": "ORD-6XSATKIWECCR",
+        "type": "Production",
+        "title": "Почати виробництво",
+        "priority": "INFO",
+        "status": "Open",
+        "due_at": "2026-05-15T13:00:00.000Z",
+        "created_at": "2026-05-15T13:11:53.364Z",
+        "updated_at": "2026-05-15T13:11:53.364Z"
+      },
+      {
+        "task_id": "TASK-6XSAVZIJRRCW",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "type": "StatusGuard",
+        "title": "Неможливий перехід статусу Scheduled → Ready: TRANSITION_NOT_ALLOWED:Scheduled->Ready",
+        "priority": "WARNING",
+        "status": "Open",
+        "due_at": "",
+        "created_at": "2026-05-15T13:11:53.375Z",
+        "updated_at": "2026-05-15T13:11:53.375Z"
+      }
+    ]
+  },
+  "CalendarLog": {
+    "columns": [
+      "calendar_event_id",
+      "order_id",
+      "type",
+      "start_at",
+      "end_at",
+      "status",
+      "created_at"
+    ],
+    "rows": [
+      {
+        "calendar_event_id": "CAL-6XSASJK1TZ65",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "type": "production",
+        "start_at": "2026-05-15T09:00:00.000Z",
+        "end_at": "2026-05-15T13:00:00.000Z",
+        "status": "Scheduled",
+        "created_at": "2026-05-15T13:11:53.251Z"
+      },
+      {
+        "calendar_event_id": "CAL-6XSAVILKHL2W",
+        "order_id": "ORD-6XSATKIWECCR",
+        "type": "production",
+        "start_at": "2026-05-15T13:00:00.000Z",
+        "end_at": "2026-05-15T17:00:00.000Z",
+        "status": "Scheduled",
+        "created_at": "2026-05-15T13:11:53.358Z"
+      }
+    ]
+  },
+  "CalendarOverrides": {
+    "columns": [
+      "override_id",
+      "date",
+      "type",
+      "start_time",
+      "end_time",
+      "reason",
+      "created_by"
+    ],
+    "rows": []
+  },
+  "MessageTemplates": {
+    "columns": [
+      "template_key",
+      "template_text",
+      "language",
+      "updated_at"
+    ],
+    "rows": [
+      {
+        "template_key": "greeting",
+        "template_text": "Вітаю! Я допоможу оформити замовлення. Що саме бажаєте замовити та на яку дату?",
+        "language": "uk",
+        "updated_at": "2026-05-15T13:11:52.933Z"
+      },
+      {
+        "template_key": "allergy_reminder",
+        "template_text": "Щоб підготувати безпечну пропозицію, повідомте, будь ласка, якщо є алергії або продукти, яких варто уникати.",
+        "language": "uk",
+        "updated_at": "2026-05-15T13:11:52.937Z"
+      },
+      {
+        "template_key": "manager_handoff",
+        "template_text": "Дякуємо. Я передав запит менеджеру. Залиште контакт — з вами зв’яжуться.",
+        "language": "uk",
+        "updated_at": "2026-05-15T13:11:52.940Z"
+      },
+      {
+        "template_key": "proposal_message",
+        "template_text": "Попередня пропозиція сформована. Очікуємо підтвердження.",
+        "language": "uk",
+        "updated_at": "2026-05-15T13:11:52.943Z"
+      }
+    ]
+  },
+  "ActivityLog": {
+    "columns": [
+      "log_id",
+      "timestamp",
+      "entity_type",
+      "entity_id",
+      "action",
+      "old_value",
+      "new_value",
+      "source"
+    ],
+    "rows": [
+      {
+        "log_id": "LOG-6XSAP1HM6NRP",
+        "timestamp": "2026-05-15T13:11:53.125Z",
+        "entity_type": "Workspace",
+        "entity_id": "default",
+        "action": "initializeWorkspace",
+        "old_value": "",
+        "new_value": "{\"template\":\"cakes\"}",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSAS8F49BKR",
+        "timestamp": "2026-05-15T13:11:53.240Z",
+        "entity_type": "Order",
+        "entity_id": "ORD-6XSAPY7VBFA5",
+        "action": "reserveStock",
+        "old_value": "",
+        "new_value": "[{\"component_id\":\"COMP-6XSAMI4D0XN2\",\"required_qty\":0.45,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":10,\"reserved\":0.45,\"missing\":0},{\"component_id\":\"COMP-6XSAMQL6NRJC\",\"required_qty\":0.25,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":8,\"reserved\":0.25,\"missing\":0},{\"component_id\":\"COMP-6XSAMXIC7SIB\",\"required_qty\":0.1,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":1.5,\"reserved\":0.1,\"missing\":0},{\"component_id\":\"COMP-6XSAN2MUSSKG\",\"required_qty\":0.35,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":3,\"reserved\":0.35,\"missing\":0},{\"component_id\":\"COMP-6XSANBNY8P8N\",\"required_qty\":0.2,\"unit\":\"kg\",\"source\":\"customization\",\"available\":1.5,\"reserved\":0.2,\"missing\":0},{\"component_id\":\"COMP-6XSANK3UAQMB\",\"required_qty\":1,\"unit\":\"pcs\",\"source\":\"customization\",\"available\":50,\"reserved\":1,\"missing\":0}]",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSASEULX0GW",
+        "timestamp": "2026-05-15T13:11:53.246Z",
+        "entity_type": "Order",
+        "entity_id": "ORD-6XSAPY7VBFA5",
+        "action": "updateOrderStatus",
+        "old_value": "\"ProposalSent\"",
+        "new_value": "\"ProposalSent\"",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSAST42ZLX9",
+        "timestamp": "2026-05-15T13:11:53.261Z",
+        "entity_type": "Order",
+        "entity_id": "ORD-6XSAPY7VBFA5",
+        "action": "createOrder",
+        "old_value": "",
+        "new_value": "{\"orderInput\":{\"event_id\":\"evt-1\",\"source\":\"test\",\"client_name\":\"Test Client\",\"client_contact\":\"+380111111111\",\"product_name\":\"Chocolate Cake\",\"quantity\":1,\"desired_date\":\"2026-05-15T13:11:53.140Z\",\"preferences\":\"більше ягід\",\"restrictions_or_allergies\":\"без горіхів\",\"customizations\":[{\"name\":\"Add raspberry\"},{\"name\":\"Remove nuts\"},{\"name\":\"Add inscription\",\"custom_value\":\"Happy birthday\"}],\"urgent\":false},\"cost\":167,\"customizationTotals\":{\"resolved\":[{\"valid\":true,\"option_id\":\"OPT-6XSAOQUI0JLX\",\"name\":\"Add raspberry\",\"type\":\"add\",\"custom_value\":\"\",\"component_id\":\"COMP-6XSANBNY8P8N\",\"qty_delta\":0.2,\"unit\":\"kg\",\"price_delta\":120,\"cost_delta\":52,\"work_hours_delta\":0.1},{\"valid\":true,\"option_id\":\"OPT-6XSAOT1VKKM0\",\"name\":\"Remove nuts\",\"type\":\"remove\",\"custom_value\":\"\",\"component_id\":\"COMP-6XSANGYUDOHS\",\"qty_delta\":-0.1,\"unit\":\"kg\",\"price_delta\":0,\"cost_delta\":-30,\"work_hours_delta\":0},{\"valid\":true,\"option_id\":\"OPT-6XSAOWL67BSC\",\"name\":\"Add inscription\",\"type\":\"add\",\"custom_value\":\"Happy birthday\",\"component_id\":\"COMP-6XSANK3UAQMB\",\"qty_delta\":1,\"unit\":\"pcs\",\"price_delta\":80,\"cost_delta\":30,\"work_hours_delta\":0.1}],\"price_delta\":200,\"cost_delta\":52,\"work_hours_delta\":0.2},\"proposedPrice\":417.1}",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSAV5EEWYOB",
+        "timestamp": "2026-05-15T13:11:53.345Z",
+        "entity_type": "Order",
+        "entity_id": "ORD-6XSATKIWECCR",
+        "action": "reserveStock",
+        "old_value": "",
+        "new_value": "[{\"component_id\":\"COMP-6XSAMI4D0XN2\",\"required_qty\":0.45,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":9.55,\"reserved\":0.45,\"missing\":0},{\"component_id\":\"COMP-6XSAMQL6NRJC\",\"required_qty\":0.25,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":7.75,\"reserved\":0.25,\"missing\":0},{\"component_id\":\"COMP-6XSAMXIC7SIB\",\"required_qty\":0.1,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":1.4,\"reserved\":0.1,\"missing\":0},{\"component_id\":\"COMP-6XSAN2MUSSKG\",\"required_qty\":0.35,\"unit\":\"kg\",\"source\":\"base_bom\",\"available\":2.65,\"reserved\":0.35,\"missing\":0}]",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSAVCOAYT1M",
+        "timestamp": "2026-05-15T13:11:53.352Z",
+        "entity_type": "Order",
+        "entity_id": "ORD-6XSATKIWECCR",
+        "action": "updateOrderStatus",
+        "old_value": "\"ProposalSent\"",
+        "new_value": "\"ProposalSent\"",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSAVQ8003N7",
+        "timestamp": "2026-05-15T13:11:53.366Z",
+        "entity_type": "Order",
+        "entity_id": "ORD-6XSATKIWECCR",
+        "action": "createOrder",
+        "old_value": "",
+        "new_value": "{\"orderInput\":{\"event_id\":\"evt-2\",\"source\":\"test\",\"client_name\":\"Test Client\",\"client_contact\":\"+380111111111\",\"product_name\":\"Chocolate Cake\",\"quantity\":1,\"desired_date\":\"2026-05-15T13:11:53.272Z\",\"urgent\":false},\"cost\":115,\"customizationTotals\":{\"resolved\":[],\"price_delta\":0,\"cost_delta\":0,\"work_hours_delta\":0},\"proposedPrice\":134.55}",
+        "source": "system"
+      },
+      {
+        "log_id": "LOG-6XSAW69DPKDA",
+        "timestamp": "2026-05-15T13:11:53.382Z",
+        "entity_type": "Error",
+        "entity_id": "ERR-6XSAW3EATTB9",
+        "action": "createUserFacingError",
+        "old_value": "",
+        "new_value": "{\"error_id\":\"ERR-6XSAW3EATTB9\",\"operation_id\":\"test-error\",\"user_message\":\"Сталася технічна помилка. Запит передано менеджеру.\",\"manager_message\":\"[UNKNOWN_ERROR] {\\\"message\\\":\\\"test\\\",\\\"stack\\\":\\\"Error: test\\\\n    at file:///C:/Coder/universal-order-production-agent-full-functions/tests/runLocalTests.js:80:53\\\\n    at safeExecute (file:///C:/Coder/universal-order-production-agent-full-functions/app/js/errors/userErrorService.js:34:32)\\\\n    at file:///C:/Coder/universal-order-production-agent-full-functions/tests/runLocalTests.js:80:13\\\"}\",\"severity\":\"CRITICAL\",\"status\":\"Open\",\"created_at\":\"2026-05-15T13:11:53.379Z\",\"resolved_at\":\"\"}",
+        "source": "system"
+      }
+    ]
+  },
+  "ProcessedEvents": {
+    "columns": [
+      "event_id",
+      "source",
+      "processed_at",
+      "status"
+    ],
+    "rows": [
+      {
+        "event_id": "evt-1",
+        "source": "test",
+        "processed_at": "2026-05-15T13:11:53.266Z",
+        "status": "Processed"
+      },
+      {
+        "event_id": "evt-2",
+        "source": "test",
+        "processed_at": "2026-05-15T13:11:53.371Z",
+        "status": "Processed"
+      }
+    ]
+  },
+  "FailedOperations": {
+    "columns": [
+      "operation_id",
+      "type",
+      "payload",
+      "retry_count",
+      "last_error",
+      "failed_at",
+      "next_retry"
+    ],
+    "rows": []
+  },
+  "DiscountRules": {
+    "columns": [
+      "discount_rule_id",
+      "name",
+      "type",
+      "value",
+      "applies_to",
+      "every_n_order",
+      "is_active",
+      "created_at",
+      "updated_at"
+    ],
+    "rows": [
+      {
+        "discount_rule_id": "DISC-6XSAPEC3XG0U",
+        "name": "Every second order",
+        "type": "percent",
+        "value": 10,
+        "applies_to": "all",
+        "every_n_order": 2,
+        "is_active": true,
+        "created_at": "2026-05-15T13:11:53.138Z",
+        "updated_at": "2026-05-15T13:11:53.138Z"
+      }
+    ]
+  },
+  "ClientPrices": {
+    "columns": [
+      "client_price_id",
+      "client_id",
+      "product_id",
+      "custom_price",
+      "is_active",
+      "reason",
+      "created_at",
+      "updated_at"
+    ],
+    "rows": []
+  },
+  "UserFacingErrors": {
+    "columns": [
+      "error_id",
+      "operation_id",
+      "user_message",
+      "manager_message",
+      "severity",
+      "status",
+      "created_at",
+      "resolved_at"
+    ],
+    "rows": [
+      {
+        "error_id": "ERR-6XSAW3EATTB9",
+        "operation_id": "test-error",
+        "user_message": "Сталася технічна помилка. Запит передано менеджеру.",
+        "manager_message": "[UNKNOWN_ERROR] {\"message\":\"test\",\"stack\":\"Error: test\\n    at file:///C:/Coder/universal-order-production-agent-full-functions/tests/runLocalTests.js:80:53\\n    at safeExecute (file:///C:/Coder/universal-order-production-agent-full-functions/app/js/errors/userErrorService.js:34:32)\\n    at file:///C:/Coder/universal-order-production-agent-full-functions/tests/runLocalTests.js:80:13\"}",
+        "severity": "CRITICAL",
+        "status": "Open",
+        "created_at": "2026-05-15T13:11:53.379Z",
+        "resolved_at": ""
+      }
+    ]
+  },
+  "ChangeLog": {
+    "columns": [
+      "change_id",
+      "version",
+      "date",
+      "author",
+      "summary",
+      "details"
+    ],
+    "rows": []
+  },
+  "CodeRequirements": {
+    "columns": [
+      "requirement_id",
+      "category",
+      "description",
+      "status"
+    ],
+    "rows": [
+      {
+        "requirement_id": "REQ-CLEAN-001",
+        "category": "clean_code",
+        "description": "All table operations must use Data Access Layer functions.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-ERR-001",
+        "category": "error_handling",
+        "description": "All technical errors must create safe user-facing output and manager debug details.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-PRICE-001",
+        "category": "pricing",
+        "description": "Personal price overrides discounts and base price.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-PRICE-002",
+        "category": "pricing",
+        "description": "If final price is below cost, show manager warning.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-HISTORY-001",
+        "category": "history",
+        "description": "Every feature change must update CHANGELOG.md and relevant docs.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-IDEMP-001",
+        "category": "idempotency",
+        "description": "Every webhook/event must be checked through ProcessedEvents before creating orders.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-STATE-001",
+        "category": "state_guards",
+        "description": "Order status transitions must use validateOrderTransition().",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-DISCOUNT-001",
+        "category": "pricing",
+        "description": "Every-N-order discount must calculate real client order index, not hardcoded values.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-CUSTOM-001",
+        "category": "customization",
+        "description": "Product customizations must be applied through CustomizationService, not duplicated in order workflows.",
+        "status": "active"
+      },
+      {
+        "requirement_id": "REQ-PREF-001",
+        "category": "client_memory",
+        "description": "Client preferences and restrictions must be saved to ClientPreferencesHistory when relevant.",
+        "status": "active"
+      }
+    ]
+  },
+  "OrderStateGuards": {
+    "columns": [
+      "from_status",
+      "to_status",
+      "required_condition",
+      "is_active"
+    ],
+    "rows": []
+  },
+  "OptionGroups": {
+    "columns": [
+      "option_group_id",
+      "product_id",
+      "name",
+      "selection_type",
+      "is_required",
+      "min_select",
+      "max_select",
+      "is_active"
+    ],
+    "rows": [
+      {
+        "option_group_id": "OG-6XSAOG1BOTZH",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "name": "Add-ons",
+        "selection_type": "multi",
+        "is_required": false,
+        "min_select": 0,
+        "max_select": 5,
+        "is_active": true
+      },
+      {
+        "option_group_id": "OG-6XSAOJ755VGP",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "name": "Remove ingredients",
+        "selection_type": "multi",
+        "is_required": false,
+        "min_select": 0,
+        "max_select": 5,
+        "is_active": true
+      },
+      {
+        "option_group_id": "OG-6XSAOMVQA5OC",
+        "product_id": "PROD-6XSAMB1OAWE2",
+        "name": "Add-ons",
+        "selection_type": "multi",
+        "is_required": false,
+        "min_select": 0,
+        "max_select": 5,
+        "is_active": true
+      }
+    ]
+  },
+  "ProductOptions": {
+    "columns": [
+      "option_id",
+      "option_group_id",
+      "product_id",
+      "name",
+      "type",
+      "component_id",
+      "qty_delta",
+      "unit",
+      "price_delta",
+      "cost_delta",
+      "work_hours_delta",
+      "is_active",
+      "description"
+    ],
+    "rows": [
+      {
+        "option_id": "OPT-6XSAOQUI0JLX",
+        "option_group_id": "OG-6XSAOG1BOTZH",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "name": "Add raspberry",
+        "type": "add",
+        "component_id": "COMP-6XSANBNY8P8N",
+        "qty_delta": 0.2,
+        "unit": "kg",
+        "price_delta": 120,
+        "cost_delta": 52,
+        "work_hours_delta": 0.1,
+        "is_active": true,
+        "description": "Add raspberry to cake"
+      },
+      {
+        "option_id": "OPT-6XSAOT1VKKM0",
+        "option_group_id": "OG-6XSAOJ755VGP",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "name": "Remove nuts",
+        "type": "remove",
+        "component_id": "COMP-6XSANGYUDOHS",
+        "qty_delta": -0.1,
+        "unit": "kg",
+        "price_delta": 0,
+        "cost_delta": -30,
+        "work_hours_delta": 0,
+        "is_active": true,
+        "description": "Remove nuts from recipe or avoid nuts"
+      },
+      {
+        "option_id": "OPT-6XSAOWL67BSC",
+        "option_group_id": "OG-6XSAOG1BOTZH",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "name": "Add inscription",
+        "type": "add",
+        "component_id": "COMP-6XSANK3UAQMB",
+        "qty_delta": 1,
+        "unit": "pcs",
+        "price_delta": 80,
+        "cost_delta": 30,
+        "work_hours_delta": 0.1,
+        "is_active": true,
+        "description": "Add text inscription"
+      },
+      {
+        "option_id": "OPT-6XSAOZ89UMI3",
+        "option_group_id": "OG-6XSAOMVQA5OC",
+        "product_id": "PROD-6XSAMB1OAWE2",
+        "name": "Extra berries",
+        "type": "add",
+        "component_id": "COMP-6XSAN6U68YRF",
+        "qty_delta": 0.2,
+        "unit": "kg",
+        "price_delta": 110,
+        "cost_delta": 44,
+        "work_hours_delta": 0.1,
+        "is_active": true,
+        "description": "Extra berries"
+      }
+    ]
+  },
+  "OrderItemCustomizations": {
+    "columns": [
+      "customization_id",
+      "order_item_id",
+      "option_id",
+      "custom_value",
+      "type",
+      "component_id",
+      "qty_delta",
+      "unit",
+      "price_delta",
+      "cost_delta",
+      "work_hours_delta",
+      "created_at"
+    ],
+    "rows": [
+      {
+        "customization_id": "CUST-6XSAQ5PU22E8",
+        "order_item_id": "OI-6XSAQ20RQPXP",
+        "option_id": "OPT-6XSAOQUI0JLX",
+        "custom_value": "Add raspberry",
+        "type": "add",
+        "component_id": "COMP-6XSANBNY8P8N",
+        "qty_delta": 0.2,
+        "unit": "kg",
+        "price_delta": 120,
+        "cost_delta": 52,
+        "work_hours_delta": 0.1,
+        "created_at": "2026-05-15T13:11:53.165Z"
+      },
+      {
+        "customization_id": "CUST-6XSAQ71ZT3B7",
+        "order_item_id": "OI-6XSAQ20RQPXP",
+        "option_id": "OPT-6XSAOT1VKKM0",
+        "custom_value": "Remove nuts",
+        "type": "remove",
+        "component_id": "COMP-6XSANGYUDOHS",
+        "qty_delta": -0.1,
+        "unit": "kg",
+        "price_delta": 0,
+        "cost_delta": -30,
+        "work_hours_delta": 0,
+        "created_at": "2026-05-15T13:11:53.167Z"
+      },
+      {
+        "customization_id": "CUST-6XSAQ9KZKIVF",
+        "order_item_id": "OI-6XSAQ20RQPXP",
+        "option_id": "OPT-6XSAOWL67BSC",
+        "custom_value": "Happy birthday",
+        "type": "add",
+        "component_id": "COMP-6XSANK3UAQMB",
+        "qty_delta": 1,
+        "unit": "pcs",
+        "price_delta": 80,
+        "cost_delta": 30,
+        "work_hours_delta": 0.1,
+        "created_at": "2026-05-15T13:11:53.169Z"
+      }
+    ]
+  },
+  "ClientPreferencesHistory": {
+    "columns": [
+      "preference_id",
+      "client_id",
+      "order_id",
+      "product_id",
+      "preference_type",
+      "preference_value",
+      "source",
+      "created_at"
+    ],
+    "rows": [
+      {
+        "preference_id": "PREF-6XSAQBXFTJ5F",
+        "client_id": "CLI-6XSAPKVCP18K",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "preference_type": "preferences",
+        "preference_value": "більше ягід",
+        "source": "order",
+        "created_at": "2026-05-15T13:11:53.171Z"
+      },
+      {
+        "preference_id": "PREF-6XSAQCB8AY84",
+        "client_id": "CLI-6XSAPKVCP18K",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "preference_type": "restriction_or_allergy",
+        "preference_value": "без горіхів",
+        "source": "order",
+        "created_at": "2026-05-15T13:11:53.172Z"
+      },
+      {
+        "preference_id": "PREF-6XSAQEGD9BWK",
+        "client_id": "CLI-6XSAPKVCP18K",
+        "order_id": "ORD-6XSAPY7VBFA5",
+        "product_id": "PROD-6XSAM6K15PJV",
+        "preference_type": "customization",
+        "preference_value": "Add raspberry; Remove nuts; Add inscription",
+        "source": "order",
+        "created_at": "2026-05-15T13:11:53.174Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "required": [
+    "client_name",
+    "product_name",
+    "quantity"
+  ],
+  "properties": {
+    "client_name": "string",
+    "client_contact": "string",
+    "product_name": "string",
+    "quantity": "number",
+    "desired_date": "string|null",
+    "preferences": "string|null",
+    "restrictions_or_allergies": "string|null",
+    "urgent": "boolean",
+    "customizations": "array"
+  },
+  "customization_example": [
+    {
+      "name": "Add raspberry"
+    },
+    {
+      "name": "Remove nuts"
+    },
+    {
+      "name": "Add inscription",
+      "custom_value": "Happy birthday"
+    }
+  ]
+}

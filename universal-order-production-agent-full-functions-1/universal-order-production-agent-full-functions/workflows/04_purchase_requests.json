@@ -1,0 +1,47 @@
+{
+  "name": "04 Purchase Requests",
+  "active": false,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "list-purchases",
+      "name": "Get Active Purchase Requests",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 300],
+      "parameters": {
+        "functionCode": "const { getActivePurchaseRequests } = require('./app/js/purchases/purchaseService.js');\nreturn [{ json: { purchases: getActivePurchaseRequests() } }];"
+      }
+    },
+    {
+      "id": "notify-manager-purchases",
+      "name": "Notify Manager",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 300],
+      "parameters": {
+        "functionCode": "const { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst { purchases } = $input.first().json;\nif (purchases.length === 0) return $input.all();\nconst text = `🧾 Активні закупки (${purchases.length}):\\n` + purchases.map(p => `• ${p.purchase_request_id}: ${p.status}`).join('\\n');\nawait sendManagerAlert(text);\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "receive-purchase",
+      "name": "Receive Purchase (Manual Step)",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 300],
+      "parameters": {
+        "functionCode": "// Input: { purchase_request_id }\n// Calls: stockService.addStock() for each item\n// Calls: updateRow PurchaseRequests status = Received\n// Then re-checks WaitingPurchase orders\nconst { addStock } = require('./app/js/stock/stockService.js');\nconst { findRows, updateRow } = require('./app/js/data/rowRepository.js');\nconst prId = $input.first().json.purchase_request_id;\nconst items = findRows('PurchaseRequestItems', r => r.purchase_request_id === prId);\nfor (const item of items) {\n  if (item.component_id) addStock(item.component_id, Number(item.quantity || 0), `purchase:${prId}`);\n}\nupdateRow('PurchaseRequests', 'purchase_request_id', prId, { status: 'Received' });\nreturn [{ json: { received: prId, items } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Get Active Purchase Requests", "type": "main", "index": 0 }]] },
+    "Get Active Purchase Requests": { "main": [[{ "node": "Notify Manager", "type": "main", "index": 0 }]] },
+    "Notify Manager": { "main": [[{ "node": "Receive Purchase (Manual Step)", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "tags": ["purchases", "stock"]
+}

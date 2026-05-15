@@ -1,0 +1,296 @@
+{
+  "schema_version": "0.5.0",
+  "sheets": {
+    "SystemMeta": [
+      "key",
+      "value",
+      "updated_at"
+    ],
+    "Settings": [
+      "key",
+      "value",
+      "type",
+      "description"
+    ],
+    "Products": [
+      "product_id",
+      "name",
+      "description",
+      "unit",
+      "base_price",
+      "margin_percent",
+      "estimated_work_hours",
+      "packaging_hours",
+      "cleanup_buffer",
+      "is_active",
+      "allow_loss_price"
+    ],
+    "Components": [
+      "component_id",
+      "name",
+      "unit",
+      "unit_cost",
+      "is_active"
+    ],
+    "ProductComponents": [
+      "product_component_id",
+      "product_id",
+      "component_id",
+      "qty_per_unit",
+      "unit"
+    ],
+    "Stock": [
+      "stock_id",
+      "component_id",
+      "current_qty",
+      "reserved_qty",
+      "unit",
+      "min_qty",
+      "unit_cost"
+    ],
+    "InventoryTransactions": [
+      "transaction_id",
+      "component_id",
+      "type",
+      "qty",
+      "unit",
+      "order_id",
+      "reason",
+      "created_at"
+    ],
+    "Clients": [
+      "client_id",
+      "name",
+      "contact",
+      "preferences",
+      "restrictions_or_allergies",
+      "created_at",
+      "updated_at",
+      "order_history_summary",
+      "last_order_at"
+    ],
+    "Orders": [
+      "order_id",
+      "client_id",
+      "status",
+      "payment_status",
+      "delivery_method",
+      "desired_date",
+      "ready_date",
+      "shipping_date",
+      "estimated_cost_snapshot",
+      "actual_cost",
+      "proposed_price",
+      "recommended_new_price",
+      "price_review_status",
+      "manager_decision",
+      "created_at",
+      "updated_at",
+      "discount_amount",
+      "discount_rule_id",
+      "final_price",
+      "price_warning",
+      "order_index_for_client",
+      "pricing_source",
+      "event_id"
+    ],
+    "OrderItems": [
+      "order_item_id",
+      "order_id",
+      "product_id",
+      "quantity",
+      "unit",
+      "customization_summary",
+      "base_cost",
+      "customization_cost_delta",
+      "customization_price_delta",
+      "customization_work_hours_delta"
+    ],
+    "Reservations": [
+      "reservation_id",
+      "order_id",
+      "component_id",
+      "reserved_qty",
+      "unit",
+      "status",
+      "created_at",
+      "updated_at"
+    ],
+    "PurchaseRequests": [
+      "purchase_request_id",
+      "status",
+      "created_at",
+      "updated_at"
+    ],
+    "PurchaseRequestItems": [
+      "purchase_request_item_id",
+      "purchase_request_id",
+      "component_id",
+      "required_qty",
+      "safety_stock_qty",
+      "total_qty",
+      "unit",
+      "status"
+    ],
+    "Tasks": [
+      "task_id",
+      "order_id",
+      "type",
+      "title",
+      "priority",
+      "status",
+      "due_at",
+      "created_at",
+      "updated_at"
+    ],
+    "CalendarLog": [
+      "calendar_event_id",
+      "order_id",
+      "type",
+      "start_at",
+      "end_at",
+      "status",
+      "created_at"
+    ],
+    "CalendarOverrides": [
+      "override_id",
+      "date",
+      "type",
+      "start_time",
+      "end_time",
+      "reason",
+      "created_by"
+    ],
+    "MessageTemplates": [
+      "template_key",
+      "template_text",
+      "language",
+      "updated_at"
+    ],
+    "ActivityLog": [
+      "log_id",
+      "timestamp",
+      "entity_type",
+      "entity_id",
+      "action",
+      "old_value",
+      "new_value",
+      "source"
+    ],
+    "ProcessedEvents": [
+      "event_id",
+      "source",
+      "processed_at",
+      "status"
+    ],
+    "FailedOperations": [
+      "operation_id",
+      "type",
+      "payload",
+      "retry_count",
+      "last_error",
+      "failed_at",
+      "next_retry"
+    ],
+    "DiscountRules": [
+      "discount_rule_id",
+      "name",
+      "type",
+      "value",
+      "applies_to",
+      "every_n_order",
+      "is_active",
+      "created_at",
+      "updated_at"
+    ],
+    "ClientPrices": [
+      "client_price_id",
+      "client_id",
+      "product_id",
+      "custom_price",
+      "is_active",
+      "reason",
+      "created_at",
+      "updated_at"
+    ],
+    "UserFacingErrors": [
+      "error_id",
+      "operation_id",
+      "user_message",
+      "manager_message",
+      "severity",
+      "status",
+      "created_at",
+      "resolved_at"
+    ],
+    "ChangeLog": [
+      "change_id",
+      "version",
+      "date",
+      "author",
+      "summary",
+      "details"
+    ],
+    "CodeRequirements": [
+      "requirement_id",
+      "category",
+      "description",
+      "status"
+    ],
+    "OrderStateGuards": [
+      "from_status",
+      "to_status",
+      "required_condition",
+      "is_active"
+    ],
+    "OptionGroups": [
+      "option_group_id",
+      "product_id",
+      "name",
+      "selection_type",
+      "is_required",
+      "min_select",
+      "max_select",
+      "is_active"
+    ],
+    "ProductOptions": [
+      "option_id",
+      "option_group_id",
+      "product_id",
+      "name",
+      "type",
+      "component_id",
+      "qty_delta",
+      "unit",
+      "price_delta",
+      "cost_delta",
+      "work_hours_delta",
+      "is_active",
+      "description"
+    ],
+    "OrderItemCustomizations": [
+      "customization_id",
+      "order_item_id",
+      "option_id",
+      "custom_value",
+      "type",
+      "component_id",
+      "qty_delta",
+      "unit",
+      "price_delta",
+      "cost_delta",
+      "work_hours_delta",
+      "created_at"
+    ],
+    "ClientPreferencesHistory": [
+      "preference_id",
+      "client_id",
+      "order_id",
+      "product_id",
+      "preference_type",
+      "preference_value",
+      "source",
+      "created_at"
+    ]
+  }
+}

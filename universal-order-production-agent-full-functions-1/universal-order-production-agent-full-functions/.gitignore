@@ -1,0 +1,5 @@
+node_modules/
+.env
+data/*.secret.json
+credentials.json
+.DS_Store

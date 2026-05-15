@@ -1,0 +1,23 @@
+{
+  "name": "universal-order-production-agent",
+  "version": "0.6.0",
+  "type": "module",
+  "description": "Universal AI Order & Production Assistant — MVP with Telegram bot, Google Sheets, customizations, and full order lifecycle",
+  "engines": { "node": ">=18.0.0" },
+  "scripts": {
+    "setup:empty": "node app/js/setup/initWorkspace.js empty",
+    "setup:demo": "node app/js/setup/initWorkspace.js cakes",
+    "health": "node app/js/setup/healthCheck.js",
+    "demo:order": "node app/js/orders/demoCreateOrder.js",
+    "test": "node tests/runLocalTests.js",
+    "demo:error": "node examples/demoErrorHandling.js",
+    "demo:pricing": "node examples/demoPricingRules.js",
+    "code:map": "cat docs/CODE_MAP.md",
+    "bot:start": "node app/js/bot/telegramBot.js",
+    "bot:polling": "BOT_MODE=polling node app/js/bot/telegramBot.js",
+    "bot:webhook": "BOT_MODE=webhook node app/js/bot/telegramBot.js",
+    "deadline:check": "node -e \"import('./app/js/tasks/deadlineMonitorService.js').then(m => console.log(JSON.stringify(m.runDeadlineCheck(), null, 2)))\"",
+    "retry:ops": "node -e \"import('./app/js/utils/retryService.js').then(m => console.log(JSON.stringify(m.getFailedOperationsSummary(), null, 2)))\""
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,74 @@
+{
+  "name": "03 Stock Reservation",
+  "active": false,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Order Created Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "check-stock",
+      "name": "Check Stock Availability",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 300],
+      "parameters": {
+        "functionCode": "// Calls: productService.calculateFinalRequiredComponents(productId, qty, customizations)\n// Calls: stockService.getAvailableStock(componentId) for each component\nconst { calculateFinalRequiredComponents } = require('./app/js/customizations/customizationService.js');\nconst { getAvailableStock } = require('./app/js/stock/stockService.js');\nconst { orderId, productId, quantity, customizations } = $input.first().json;\nconst required = calculateFinalRequiredComponents(productId, quantity, customizations || []);\nconst stockCheck = required.required_components.map(c => ({\n  ...c,\n  available: getAvailableStock(c.component_id),\n  missing: Math.max(0, c.required_qty - getAvailableStock(c.component_id))\n}));\nreturn [{ json: { orderId, stockCheck, hasShortage: stockCheck.some(c => c.missing > 0) } }];"
+      }
+    },
+    {
+      "id": "has-shortage",
+      "name": "Has Shortage?",
+      "type": "n8n-nodes-base.if",
+      "position": [500, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.hasShortage }}", "operation": "equal", "value2": true }]
+        }
+      }
+    },
+    {
+      "id": "create-purchase-request",
+      "name": "Create Purchase Request",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 200],
+      "parameters": {
+        "functionCode": "// Calls: purchaseService.createOrMergePurchaseRequest(missingComponents)\n// Merges with existing Draft/Pending requests for same components\nconst { createOrMergePurchaseRequest } = require('./app/js/purchases/purchaseService.js');\nconst missing = $json.stockCheck.filter(c => c.missing > 0);\nconst pr = createOrMergePurchaseRequest(missing);\nreturn [{ json: { ...$json, purchaseRequest: pr } }];"
+      }
+    },
+    {
+      "id": "reserve-stock",
+      "name": "Reserve Stock",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 400],
+      "parameters": {
+        "functionCode": "// Calls: stockService.reserveStock(orderId, requiredComponents)\n// Updates Stock.reserved_qty, creates Reservations + InventoryTransactions\nconst { reserveStock } = require('./app/js/stock/stockService.js');\nconst result = reserveStock($json.orderId, $json.stockCheck);\nreturn [{ json: { ...$json, reservationResult: result } }];"
+      }
+    },
+    {
+      "id": "update-order-status",
+      "name": "Update Order Status",
+      "type": "n8n-nodes-base.function",
+      "position": [900, 300],
+      "parameters": {
+        "functionCode": "const { updateOrderStatus } = require('./app/js/orders/orderService.js');\nconst status = $json.hasShortage ? 'WaitingPurchase' : 'ProposalSent';\nupdateOrderStatus($json.orderId, status);\nreturn [{ json: { ...$json, newStatus: status } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Order Created Trigger": { "main": [[{ "node": "Check Stock Availability", "type": "main", "index": 0 }]] },
+    "Check Stock Availability": { "main": [[{ "node": "Has Shortage?", "type": "main", "index": 0 }]] },
+    "Has Shortage?": {
+      "main": [
+        [{ "node": "Create Purchase Request", "type": "main", "index": 0 }],
+        [{ "node": "Reserve Stock", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create Purchase Request": { "main": [[{ "node": "Update Order Status", "type": "main", "index": 0 }]] },
+    "Reserve Stock": { "main": [[{ "node": "Update Order Status", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "tags": ["stock", "reservations"]
+}

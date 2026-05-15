@@ -1,0 +1,248 @@
+{
+  "settings": {
+    "business_name": "Demo Cakes",
+    "currency": "UAH",
+    "work_start": "09:00",
+    "lunch_start": "13:00",
+    "lunch_end": "14:00",
+    "work_end": "18:00",
+    "daily_capacity_hours": 8,
+    "shipping_buffer_days": 1,
+    "cost_change_threshold_percent": 3,
+    "critical_cost_change_percent": 10,
+    "price_buffer_percent": 5,
+    "safety_stock_percent": 10
+  },
+  "products": [
+    {
+      "name": "Chocolate Cake",
+      "description": "Chocolate demo cake",
+      "unit": "kg",
+      "base_price": 900,
+      "margin_percent": 30,
+      "estimated_work_hours": 3,
+      "packaging_hours": 0.5,
+      "cleanup_buffer": 0.5
+    },
+    {
+      "name": "Honey Cake",
+      "description": "Honey demo cake",
+      "unit": "kg",
+      "base_price": 800,
+      "margin_percent": 28,
+      "estimated_work_hours": 2.5,
+      "packaging_hours": 0.5,
+      "cleanup_buffer": 0.5
+    },
+    {
+      "name": "Berry Cheesecake",
+      "description": "Berry demo cake",
+      "unit": "kg",
+      "base_price": 1000,
+      "margin_percent": 35,
+      "estimated_work_hours": 3.5,
+      "packaging_hours": 0.5,
+      "cleanup_buffer": 0.5
+    },
+    {
+      "name": "Napoleon Cake",
+      "description": "Napoleon demo cake",
+      "unit": "kg",
+      "base_price": 850,
+      "margin_percent": 30,
+      "estimated_work_hours": 3,
+      "packaging_hours": 0.5,
+      "cleanup_buffer": 0.5
+    }
+  ],
+  "components": [
+    {
+      "name": "Flour",
+      "unit": "kg",
+      "unit_cost": 35,
+      "stock": 10,
+      "min_qty": 2
+    },
+    {
+      "name": "Sugar",
+      "unit": "kg",
+      "unit_cost": 45,
+      "stock": 8,
+      "min_qty": 2
+    },
+    {
+      "name": "Cocoa",
+      "unit": "kg",
+      "unit_cost": 250,
+      "stock": 1.5,
+      "min_qty": 0.5
+    },
+    {
+      "name": "Cream",
+      "unit": "kg",
+      "unit_cost": 180,
+      "stock": 3,
+      "min_qty": 1
+    },
+    {
+      "name": "Berries",
+      "unit": "kg",
+      "unit_cost": 220,
+      "stock": 2,
+      "min_qty": 1
+    },
+    {
+      "name": "Raspberry",
+      "unit": "kg",
+      "unit_cost": 260,
+      "stock": 1.5,
+      "min_qty": 0.5
+    },
+    {
+      "name": "Nuts",
+      "unit": "kg",
+      "unit_cost": 300,
+      "stock": 1.0,
+      "min_qty": 0.3
+    },
+    {
+      "name": "Inscription",
+      "unit": "pcs",
+      "unit_cost": 30,
+      "stock": 50,
+      "min_qty": 10
+    }
+  ],
+  "bom": [
+    {
+      "product": "Chocolate Cake",
+      "component": "Flour",
+      "qty_per_unit": 0.45
+    },
+    {
+      "product": "Chocolate Cake",
+      "component": "Sugar",
+      "qty_per_unit": 0.25
+    },
+    {
+      "product": "Chocolate Cake",
+      "component": "Cocoa",
+      "qty_per_unit": 0.1
+    },
+    {
+      "product": "Chocolate Cake",
+      "component": "Cream",
+      "qty_per_unit": 0.35
+    },
+    {
+      "product": "Berry Cheesecake",
+      "component": "Berries",
+      "qty_per_unit": 0.3
+    },
+    {
+      "product": "Berry Cheesecake",
+      "component": "Cream",
+      "qty_per_unit": 0.45
+    },
+    {
+      "product": "Honey Cake",
+      "component": "Flour",
+      "qty_per_unit": 0.4
+    },
+    {
+      "product": "Honey Cake",
+      "component": "Sugar",
+      "qty_per_unit": 0.2
+    },
+    {
+      "product": "Napoleon Cake",
+      "component": "Flour",
+      "qty_per_unit": 0.5
+    },
+    {
+      "product": "Napoleon Cake",
+      "component": "Cream",
+      "qty_per_unit": 0.4
+    }
+  ],
+  "option_groups": [
+    {
+      "product": "Chocolate Cake",
+      "name": "Add-ons",
+      "selection_type": "multi",
+      "is_required": false,
+      "min_select": 0,
+      "max_select": 5
+    },
+    {
+      "product": "Chocolate Cake",
+      "name": "Remove ingredients",
+      "selection_type": "multi",
+      "is_required": false,
+      "min_select": 0,
+      "max_select": 5
+    },
+    {
+      "product": "Berry Cheesecake",
+      "name": "Add-ons",
+      "selection_type": "multi",
+      "is_required": false,
+      "min_select": 0,
+      "max_select": 5
+    }
+  ],
+  "product_options": [
+    {
+      "product": "Chocolate Cake",
+      "group": "Add-ons",
+      "name": "Add raspberry",
+      "type": "add",
+      "component": "Raspberry",
+      "qty_delta": 0.2,
+      "unit": "kg",
+      "price_delta": 120,
+      "cost_delta": 52,
+      "work_hours_delta": 0.1,
+      "description": "Add raspberry to cake"
+    },
+    {
+      "product": "Chocolate Cake",
+      "group": "Remove ingredients",
+      "name": "Remove nuts",
+      "type": "remove",
+      "component": "Nuts",
+      "qty_delta": -0.1,
+      "unit": "kg",
+      "price_delta": 0,
+      "cost_delta": -30,
+      "work_hours_delta": 0,
+      "description": "Remove nuts from recipe or avoid nuts"
+    },
+    {
+      "product": "Chocolate Cake",
+      "group": "Add-ons",
+      "name": "Add inscription",
+      "type": "add",
+      "component": "Inscription",
+      "qty_delta": 1,
+      "unit": "pcs",
+      "price_delta": 80,
+      "cost_delta": 30,
+      "work_hours_delta": 0.1,
+      "description": "Add text inscription"
+    },
+    {
+      "product": "Berry Cheesecake",
+      "group": "Add-ons",
+      "name": "Extra berries",
+      "type": "add",
+      "component": "Berries",
+      "qty_delta": 0.2,
+      "unit": "kg",
+      "price_delta": 110,
+      "cost_delta": 44,
+      "work_hours_delta": 0.1,
+      "description": "Extra berries"
+    }
+  ]
+}

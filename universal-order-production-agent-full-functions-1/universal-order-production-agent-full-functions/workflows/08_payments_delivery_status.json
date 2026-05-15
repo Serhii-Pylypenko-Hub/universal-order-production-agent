@@ -1,0 +1,61 @@
+{
+  "name": "08 Payments & Delivery Status",
+  "active": false,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "confirm-payment",
+      "name": "Confirm Payment",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 200],
+      "parameters": {
+        "functionCode": "// Input: { orderId, amount, method }\n// Calls: paymentService.confirmPayment()\n// Updates payment_status: PartiallyPaid / Paid\n// If Paid: auto-transition order to 'Paid' status\nconst { confirmPayment } = require('./app/js/orders/paymentService.js');\nconst { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst { orderId, amount, method } = $input.first().json;\nconst result = confirmPayment(orderId, { amount, method });\nawait sendManagerAlert(`💰 Оплата ${orderId}: ${amount} грн (${method}) — статус: ${result.payment_status}`);\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "mark-ready",
+      "name": "Mark Ready for Pickup",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 400],
+      "parameters": {
+        "functionCode": "// Input: { orderId }\n// Calls: deliveryService.markReadyForPickup()\n// Sends notification to client\nconst { markReadyForPickup } = require('./app/js/orders/deliveryService.js');\nconst { sendClientMessage, sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst { orderId, clientId } = $input.first().json;\nmarkReadyForPickup(orderId);\nif (clientId) await sendClientMessage(clientId, `✅ Ваше замовлення ${orderId} готове до видачі!`);\nawait sendManagerAlert(`✅ Замовлення ${orderId} готове.`);\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "confirm-pickup",
+      "name": "Confirm Pickup",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 400],
+      "parameters": {
+        "functionCode": "// Calls: deliveryService.confirmPickup()\n// Consumes reserved stock\n// Sets status to PickedUp\nconst { confirmPickup } = require('./app/js/orders/deliveryService.js');\nconst { sendClientMessage } = require('./app/js/tasks/notificationService.js');\nconst { orderId, clientId } = $input.first().json;\nconfirmPickup(orderId);\nif (clientId) await sendClientMessage(clientId, `📦 Замовлення ${orderId} видано. Дякуємо!`);\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "mark-shipped",
+      "name": "Mark Shipped",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 200],
+      "parameters": {
+        "functionCode": "// Input: { orderId, trackingNumber, carrier }\n// Calls: deliveryService.markShipped()\n// Sends tracking info to client\nconst { markShipped } = require('./app/js/orders/deliveryService.js');\nconst { sendClientMessage } = require('./app/js/tasks/notificationService.js');\nconst { orderId, clientId, trackingNumber, carrier } = $input.first().json;\nmarkShipped(orderId, { trackingNumber, carrier });\nif (clientId) {\n  const msg = `📬 Ваше замовлення ${orderId} відправлено.${trackingNumber ? ` Трек: ${trackingNumber}` : ''}`;\n  await sendClientMessage(clientId, msg);\n}\nreturn $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [{ "node": "Confirm Payment", "type": "main", "index": 0 }],
+        [{ "node": "Mark Ready for Pickup", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mark Ready for Pickup": { "main": [[{ "node": "Confirm Pickup", "type": "main", "index": 0 }]] },
+    "Confirm Payment": { "main": [[{ "node": "Mark Shipped", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "tags": ["payments", "delivery"]
+}

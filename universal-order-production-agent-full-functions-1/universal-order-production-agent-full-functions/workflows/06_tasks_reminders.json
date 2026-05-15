@@ -1,0 +1,57 @@
+{
+  "name": "06 Tasks & Reminders",
+  "active": false,
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Hourly Cron",
+      "type": "n8n-nodes-base.cron",
+      "position": [100, 300],
+      "parameters": { "cronExpression": "0 * * * *" }
+    },
+    {
+      "id": "deadline-check",
+      "name": "Run Deadline Check",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 300],
+      "parameters": {
+        "functionCode": "// Calls: deadlineMonitorService.runDeadlineCheck()\n// Checks overdue orders, slow purchases, calendar overload\nconst { runDeadlineCheck } = require('./app/js/tasks/deadlineMonitorService.js');\nconst result = runDeadlineCheck();\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "get-open-tasks",
+      "name": "Get Overdue Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 300],
+      "parameters": {
+        "functionCode": "const { getOpenTasks } = require('./app/js/tasks/taskService.js');\nconst now = new Date();\nconst overdue = getOpenTasks().filter(t => t.due_at && new Date(t.due_at) < now);\nreturn [{ json: { overdue, count: overdue.length } }];"
+      }
+    },
+    {
+      "id": "notify-overdue",
+      "name": "Notify Overdue Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 300],
+      "parameters": {
+        "functionCode": "const { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst { overdue } = $input.first().json;\nif (!overdue.length) return [];\nconst text = `⏰ Прострочені задачі (${overdue.length}):\\n` + overdue.slice(0, 10).map(t => `• ${t.task_id}: ${t.title}`).join('\\n');\nawait sendManagerAlert(text);\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "retry-failed-ops",
+      "name": "Retry Failed Operations",
+      "type": "n8n-nodes-base.function",
+      "position": [900, 300],
+      "parameters": {
+        "functionCode": "// Calls: retryService.retryPendingOperations(handlerMap)\nconst { retryPendingOperations } = require('./app/js/utils/retryService.js');\n// Register handlers for retryable operations\nconst handlerMap = {\n  // Add operation handlers here as new features are added\n  // 'sheets.append': async (payload) => { ... },\n};\nawait retryPendingOperations(handlerMap);\nreturn $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Hourly Cron": { "main": [[{ "node": "Run Deadline Check", "type": "main", "index": 0 }]] },
+    "Run Deadline Check": { "main": [[{ "node": "Get Overdue Tasks", "type": "main", "index": 0 }]] },
+    "Get Overdue Tasks": { "main": [[{ "node": "Notify Overdue Tasks", "type": "main", "index": 0 }]] },
+    "Notify Overdue Tasks": { "main": [[{ "node": "Retry Failed Operations", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "saveManualExecutions": true },
+  "tags": ["tasks", "reminders", "monitoring"]
+}

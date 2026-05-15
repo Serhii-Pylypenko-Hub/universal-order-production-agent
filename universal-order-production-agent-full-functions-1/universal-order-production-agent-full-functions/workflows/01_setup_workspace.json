@@ -1,0 +1,57 @@
+{
+  "name": "01 Setup Workspace",
+  "active": false,
+  "nodes": [
+    {
+      "id": "trigger-setup",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "init-workspace",
+      "name": "Initialize Workspace",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 300],
+      "parameters": {
+        "functionCode": "// Calls: workspaceManager.initializeWorkspace(template)\n// Input: { template: 'cakes' | 'empty' }\n// Returns: { ok: true, sheets_created: [...] }\nconst { initializeWorkspace } = require('./app/js/setup/workspaceManager.js');\nconst template = $input.first().json.template || 'empty';\nreturn [{ json: await initializeWorkspace(template) }];"
+      }
+    },
+    {
+      "id": "init-settings",
+      "name": "Init Default Settings",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 300],
+      "parameters": {
+        "functionCode": "// Calls: settingsService.initDefaultSettings()\nconst { initDefaultSettings } = require('./app/js/manager/settingsService.js');\ninitDefaultSettings();\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "health-check",
+      "name": "Health Check",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 300],
+      "parameters": {
+        "functionCode": "// Calls: healthCheckWorkspace()\n// Returns: { ready_for_orders, telegram, ai, google_sheets, ... }\nconst { healthCheckWorkspace } = require('./app/js/setup/healthCheck.js');\nconst result = await healthCheckWorkspace();\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "notify-manager",
+      "name": "Notify Manager",
+      "type": "n8n-nodes-base.function",
+      "position": [900, 300],
+      "parameters": {
+        "functionCode": "const { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst health = $input.first().json;\nconst status = health.ready_for_orders ? '✅ Workspace готовий до роботи' : '⚠️ Workspace налаштовано частково';\nawait sendManagerAlert(status + '\\n' + JSON.stringify(health, null, 2));\nreturn $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Initialize Workspace", "type": "main", "index": 0 }]] },
+    "Initialize Workspace": { "main": [[{ "node": "Init Default Settings", "type": "main", "index": 0 }]] },
+    "Init Default Settings": { "main": [[{ "node": "Health Check", "type": "main", "index": 0 }]] },
+    "Health Check": { "main": [[{ "node": "Notify Manager", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "saveManualExecutions": true },
+  "tags": ["setup"]
+}

@@ -1,0 +1,60 @@
+{
+  "name": "07 Manager Bot",
+  "active": true,
+  "nodes": [
+    {
+      "id": "manager-webhook",
+      "name": "Manager Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [100, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "manager-bot",
+        "responseMode": "onReceived",
+        "responseData": "{ \"ok\": true }"
+      }
+    },
+    {
+      "id": "check-manager-id",
+      "name": "Is Manager?",
+      "type": "n8n-nodes-base.if",
+      "position": [300, 300],
+      "parameters": {
+        "conditions": {
+          "string": [{
+            "value1": "={{ String($json.body?.message?.chat?.id || $json.body?.callback_query?.message?.chat?.id) }}",
+            "operation": "equal",
+            "value2": "={{ $env.MANAGER_CHAT_ID }}"
+          }]
+        }
+      }
+    },
+    {
+      "id": "handle-command",
+      "name": "Handle Manager Command",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 200],
+      "parameters": {
+        "functionCode": "// Routes all manager commands to managerService.handleManagerCommand()\n// Supports: /orders /stock /tasks /purchases /calendar /client /price_review /setup_check etc.\nconst { handleManagerCommand } = require('./app/js/manager/managerService.js');\nconst { sendTelegramMessage } = require('./app/js/tasks/notificationService.js');\nconst chatId = String($json.body?.message?.chat?.id);\nconst text = $json.body?.message?.text || '';\nconst callbackData = $json.body?.callback_query?.data || '';\nconst [command, ...args] = (text || `/${callbackData}`).trim().split(/\\s+/);\ntry {\n  const result = await handleManagerCommand(command, args);\n  const responseText = typeof result === 'string' ? result : (result?.text || JSON.stringify(result, null, 2));\n  await sendTelegramMessage(chatId, responseText, { keyboard: result?.keyboard });\n} catch (err) {\n  await sendTelegramMessage(chatId, `❌ Помилка: ${err.message}`);\n}\nreturn [];"
+      }
+    },
+    {
+      "id": "ignore-non-manager",
+      "name": "Ignore",
+      "type": "n8n-nodes-base.noOp",
+      "position": [500, 400],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Manager Webhook": { "main": [[{ "node": "Is Manager?", "type": "main", "index": 0 }]] },
+    "Is Manager?": {
+      "main": [
+        [{ "node": "Handle Manager Command", "type": "main", "index": 0 }],
+        [{ "node": "Ignore", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "saveManualExecutions": true },
+  "tags": ["manager", "bot"]
+}

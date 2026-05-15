@@ -1,0 +1,118 @@
+{
+  "name": "02 AI Order Intake",
+  "active": true,
+  "nodes": [
+    {
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [100, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook",
+        "responseMode": "onReceived",
+        "responseData": "{ \"ok\": true }"
+      }
+    },
+    {
+      "id": "validate-secret",
+      "name": "Validate Secret Token",
+      "type": "n8n-nodes-base.if",
+      "position": [300, 300],
+      "parameters": {
+        "conditions": {
+          "string": [{
+            "value1": "={{ $json.headers['x-telegram-bot-api-secret-token'] }}",
+            "operation": "equal",
+            "value2": "={{ $env.TELEGRAM_WEBHOOK_SECRET }}"
+          }]
+        }
+      }
+    },
+    {
+      "id": "check-idempotency",
+      "name": "Check Idempotency",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 200],
+      "parameters": {
+        "functionCode": "// Calls: idempotencyService.isProcessed(eventId)\n// Blocks duplicate Telegram messages\nconst { isProcessed } = require('./app/js/data/idempotencyService.js');\nconst messageId = $input.first().json.body?.message?.message_id;\nconst chatId = $input.first().json.body?.message?.chat?.id;\nconst eventId = `tg_${messageId}`;\nif (messageId && isProcessed(eventId)) {\n  return [];\n}\nreturn [{ json: { ...$input.first().json, event_id: eventId, chat_id: chatId } }];"
+      }
+    },
+    {
+      "id": "rate-limit",
+      "name": "Rate Limit Check",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 200],
+      "parameters": {
+        "functionCode": "// Simple rate limiting — max 30 messages per minute per chat\n// Uses $node global store for counters\nreturn $input.all(); // Implemented in webhookHandler.js when using native bot"
+      }
+    },
+    {
+      "id": "ai-parse",
+      "name": "AI Parse Order",
+      "type": "n8n-nodes-base.function",
+      "position": [900, 200],
+      "parameters": {
+        "functionCode": "// Calls: aiService.parseOrderMessage(text, history)\n// Returns: { product_name, quantity, desired_date, customizations, needs_clarification, ... }\nconst { parseOrderMessage } = require('./app/js/bot/aiService.js');\nconst text = $input.first().json.body?.message?.text || '';\ntry {\n  const parsed = await parseOrderMessage(text);\n  return [{ json: { ...parsed, original_text: text, event_id: $input.first().json.event_id, chat_id: $input.first().json.chat_id } }];\n} catch (err) {\n  return [{ json: { error: err.message, needs_clarification: true, clarification_text: 'Виникла помилка обробки. Спробуйте ще раз.' } }];\n}"
+      }
+    },
+    {
+      "id": "check-clarification",
+      "name": "Needs Clarification?",
+      "type": "n8n-nodes-base.if",
+      "position": [1100, 200],
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.needs_clarification }}", "operation": "equal", "value2": true }]
+        }
+      }
+    },
+    {
+      "id": "send-clarification",
+      "name": "Send Clarification",
+      "type": "n8n-nodes-base.function",
+      "position": [1300, 100],
+      "parameters": {
+        "functionCode": "const { sendTelegramMessage } = require('./app/js/tasks/notificationService.js');\nawait sendTelegramMessage($json.chat_id, $json.clarification_text);\nreturn [];"
+      }
+    },
+    {
+      "id": "create-order",
+      "name": "Create Order",
+      "type": "n8n-nodes-base.function",
+      "position": [1300, 300],
+      "parameters": {
+        "functionCode": "// Calls: orderService.createOrder(orderInput)\n// All business logic (BOM, stock, calendar, pricing) happens inside\nconst { createOrder } = require('./app/js/orders/orderService.js');\nconst { sendTelegramMessage, sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst parsed = $input.first().json;\nconst orderInput = {\n  ...parsed,\n  event_id: parsed.event_id,\n  source: 'telegram',\n  client_contact: String(parsed.chat_id)\n};\nconst result = createOrder(orderInput);\nif (result.status === 'DUPLICATE_EVENT') {\n  await sendTelegramMessage(parsed.chat_id, 'Ваше замовлення вже зареєстровано.');\n} else if (result.status === 'HANDOFF_REQUIRED') {\n  await sendTelegramMessage(parsed.chat_id, 'Ваш запит передано менеджеру.');\n  await sendManagerAlert('🔄 Handoff: ' + JSON.stringify(result));\n} else {\n  const msg = `✅ Замовлення ${result.order_id} прийнято\\n💰 Ціна: ${result.proposed_price} грн\\n📅 Готовність: ${result.ready_date || 'уточнюється'}`;\n  await sendTelegramMessage(parsed.chat_id, msg);\n}\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "reject-invalid",
+      "name": "Reject Invalid Request",
+      "type": "n8n-nodes-base.function",
+      "position": [500, 400],
+      "parameters": {
+        "functionCode": "// Secret token mismatch — ignore silently\nreturn [];"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": { "main": [[{ "node": "Validate Secret Token", "type": "main", "index": 0 }]] },
+    "Validate Secret Token": {
+      "main": [
+        [{ "node": "Check Idempotency", "type": "main", "index": 0 }],
+        [{ "node": "Reject Invalid Request", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Idempotency": { "main": [[{ "node": "Rate Limit Check", "type": "main", "index": 0 }]] },
+    "Rate Limit Check": { "main": [[{ "node": "AI Parse Order", "type": "main", "index": 0 }]] },
+    "AI Parse Order": { "main": [[{ "node": "Needs Clarification?", "type": "main", "index": 0 }]] },
+    "Needs Clarification?": {
+      "main": [
+        [{ "node": "Send Clarification", "type": "main", "index": 0 }],
+        [{ "node": "Create Order", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "saveManualExecutions": true },
+  "tags": ["order", "telegram", "ai"]
+}

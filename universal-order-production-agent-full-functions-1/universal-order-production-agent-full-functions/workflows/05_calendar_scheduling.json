@@ -1,0 +1,73 @@
+{
+  "name": "05 Calendar Scheduling",
+  "active": false,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Order Paid Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "schedule-order",
+      "name": "Schedule Production Slot",
+      "type": "n8n-nodes-base.function",
+      "position": [300, 300],
+      "parameters": {
+        "functionCode": "// Calls: calendarService.scheduleOrder(orderId, product, desiredDate, workHoursDelta)\n// Returns: { ready_date, shipping_date, event }\n// Validates daily capacity is not exceeded\nconst { scheduleOrder } = require('./app/js/calendar/calendarService.js');\nconst { getOrder } = require('./app/js/orders/orderService.js');\nconst { getProductByName } = require('./app/js/orders/productService.js');\nconst { orderId } = $input.first().json;\nconst order = getOrder(orderId);\nconst product = getProductByName(order.product_name);\nconst scheduled = scheduleOrder(orderId, product, order.desired_date, 0);\nreturn [{ json: { orderId, scheduled, hasSlot: !!scheduled } }];"
+      }
+    },
+    {
+      "id": "has-slot",
+      "name": "Slot Available?",
+      "type": "n8n-nodes-base.if",
+      "position": [500, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.hasSlot }}", "operation": "equal", "value2": true }]
+        }
+      }
+    },
+    {
+      "id": "update-order-scheduled",
+      "name": "Update Order to Scheduled",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 200],
+      "parameters": {
+        "functionCode": "const { updateRow } = require('./app/js/data/rowRepository.js');\nconst { nowIso } = require('./app/js/utils/time.js');\nconst { updateOrderStatus } = require('./app/js/orders/orderService.js');\nconst { scheduled, orderId } = $input.first().json;\nupdateRow('Orders', 'order_id', orderId, {\n  ready_date: scheduled.ready_date,\n  shipping_date: scheduled.shipping_date,\n  updated_at: nowIso()\n});\nupdateOrderStatus(orderId, 'Scheduled');\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "create-production-task",
+      "name": "Create Production Task",
+      "type": "n8n-nodes-base.function",
+      "position": [900, 200],
+      "parameters": {
+        "functionCode": "const { createTask } = require('./app/js/tasks/taskService.js');\nconst { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst { orderId, scheduled } = $input.first().json;\nconst task = createTask({ orderId, type: 'Production', title: 'Почати виробництво', priority: 'INFO', dueAt: scheduled.event.start_at });\nawait sendManagerAlert(`📅 Замовлення ${orderId} заплановано на ${scheduled.ready_date}`);\nreturn [{ json: { task } }];"
+      }
+    },
+    {
+      "id": "capacity-overload",
+      "name": "Capacity Overload Alert",
+      "type": "n8n-nodes-base.function",
+      "position": [700, 400],
+      "parameters": {
+        "functionCode": "const { sendManagerAlert } = require('./app/js/tasks/notificationService.js');\nconst { orderId } = $input.first().json;\nawait sendManagerAlert(`⚠️ Немає вільного слоту для ${orderId}. Потрібне ручне планування.`);\nreturn $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Order Paid Trigger": { "main": [[{ "node": "Schedule Production Slot", "type": "main", "index": 0 }]] },
+    "Schedule Production Slot": { "main": [[{ "node": "Slot Available?", "type": "main", "index": 0 }]] },
+    "Slot Available?": {
+      "main": [
+        [{ "node": "Update Order to Scheduled", "type": "main", "index": 0 }],
+        [{ "node": "Capacity Overload Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update Order to Scheduled": { "main": [[{ "node": "Create Production Task", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "tags": ["calendar", "scheduling"]
+}

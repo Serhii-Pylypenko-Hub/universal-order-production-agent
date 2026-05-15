@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node app/js/bot/telegramBot.js)"
+    ]
+  }
+}
