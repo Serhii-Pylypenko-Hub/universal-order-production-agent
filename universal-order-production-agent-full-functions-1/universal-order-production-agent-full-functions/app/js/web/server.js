@@ -3,11 +3,28 @@ import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createSession, createUser, destroySession, getSessionUser, verifyLogin } from "./authStore.js";
-import { buildEnvPatchFromOnboarding, getConnectionConfig, loadEnvFile, saveEnvPatch, validateConnectionPatch } from "./envConfig.js";
+import { buildEnvPatchFromOnboarding, getConnectionConfig, loadEnvFile, saveEnvPatch, validateConnectionPatchDetailed } from "./envConfig.js";
 import { getDashboardSummary } from "./dashboardService.js";
+import { createInventoryMaterial, getInventoryWorkspace, getMaterialSuggestions, getProcurementPlan, receiveInventoryLot, saveProcurementSettings } from "./inventoryService.js";
+import { addTechCardItem, createCatalogProduct, getCatalogWorkspace } from "./catalogWorkspaceService.js";
+import { addPurchaseRequestItem, createPurchaseRequest, createPurchaseRequestFromProcurementPlan, getPurchaseWorkspace, receivePurchaseRequest } from "./purchaseWorkspaceService.js";
+import { getBotManagementWorkspace, saveBotAccount, saveBotAssistantSettings, saveBotFlowStep, saveBotSetting, saveBotTemplate } from "./botManagementService.js";
+import { logVoiceCommand, runAssistantCommand } from "../ai/assistantActionService.js";
+import { getActiveAiMode, isFullAssistantActive, setAiMode, setBotAssistantMode } from "../ai/subscriptionService.js";
+import { getInventoryReports } from "../reports/inventoryReportService.js";
+import {
+  addManualOrderMaterial,
+  completeOrderProduction,
+  getProductionOrderDetails,
+  releaseOrderProductionReservation,
+  startOrderProduction,
+  updateOrderMaterialRequirement
+} from "../production/productionService.js";
 import { initializeWorkspace } from "../setup/workspaceManager.js";
 import { initStore, resetStore } from "../data/store.js";
 import { createOrder } from "../orders/orderService.js";
+import { createUserFacingError } from "../errors/userErrorService.js";
+import { ValidationError, formatValidationInstructions } from "../errors/validationService.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_ROOT = path.resolve(__dirname, "../../web");
@@ -55,7 +72,13 @@ function readJson(req) {
     req.on("data", chunk => {
       raw += chunk;
       if (Buffer.byteLength(raw) > JSON_LIMIT_BYTES) {
-        reject(new Error("Request body is too large."));
+        reject(new ValidationError("Тіло запиту завелике.", [{
+          field: "_body",
+          label: "Запит",
+          type: "invalid",
+          category: "invalid_value",
+          instruction: "Запит завеликий. Зменшіть обсяг даних і спробуйте ще раз."
+        }]));
         req.destroy();
       }
     });
@@ -64,7 +87,13 @@ function readJson(req) {
       try {
         resolve(JSON.parse(raw));
       } catch {
-        reject(new Error("Invalid JSON body."));
+        reject(new ValidationError("Некоректний JSON.", [{
+          field: "_body",
+          label: "Запит",
+          type: "invalid",
+          category: "invalid_value",
+          instruction: "Дані запиту мають некоректний формат. Оновіть сторінку і повторіть дію."
+        }]));
       }
     });
   });
@@ -122,9 +151,13 @@ async function handleApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/connections") {
     const body = await readJson(req);
     const patch = buildEnvPatchFromOnboarding(body);
-    const validationErrors = validateConnectionPatch(patch);
+    const validationErrors = validateConnectionPatchDetailed(patch);
     if (validationErrors.length) {
-      return sendJson(res, 400, { ok: false, error: validationErrors.join(" ") });
+      return sendJson(res, 400, {
+        ok: false,
+        error: validationErrors.map(error => error.instruction).join("\n"),
+        validation_errors: validationErrors
+      });
     }
     const values = saveEnvPatch(patch);
     if (body.reset_store === true) resetStore();
@@ -160,6 +193,214 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { ok: true, dashboard: await getDashboardSummary() });
   }
 
+  if (req.method === "GET" && url.pathname === "/api/reports/inventory") {
+    return sendJson(res, 200, {
+      ok: true,
+      reports: getInventoryReports({
+        date: url.searchParams.get("date") || undefined,
+        months: url.searchParams.get("months") || undefined
+      })
+    });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/inventory") {
+    return sendJson(res, 200, { ok: true, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/inventory/material-suggestions") {
+    return sendJson(res, 200, { ok: true, suggestions: getMaterialSuggestions(url.searchParams.get("name") || "") });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/inventory/materials") {
+    const body = await readJson(req);
+    const result = createInventoryMaterial(body);
+    if (!result.created && result.similar?.length && !result.material) {
+      return sendJson(res, 409, {
+        ok: false,
+        error: "Схожий матеріал уже є в довіднику. Перевірте список і виберіть існуючий матеріал або підтвердьте створення нового.",
+        similar: result.similar
+      });
+    }
+    return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/inventory/lots") {
+    const body = await readJson(req);
+    const lot = receiveInventoryLot({ ...body, created_by: auth.user.user_id || "web" });
+    return sendJson(res, 200, { ok: true, lot, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/inventory/procurement-plan") {
+    return sendJson(res, 200, {
+      ok: true,
+      procurement_plan: getProcurementPlan({
+        enabled: url.searchParams.get("enabled") ?? undefined,
+        horizon_days: url.searchParams.get("horizon_days") ?? undefined
+      })
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/inventory/procurement-settings") {
+    const body = await readJson(req);
+    const settings = saveProcurementSettings(body);
+    return sendJson(res, 200, { ok: true, settings, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/production/order") {
+    return sendJson(res, 200, { ok: true, details: getProductionOrderDetails(url.searchParams.get("order_id") || "") });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/production/start") {
+    const body = await readJson(req);
+    const result = startOrderProduction(body.order_id, auth.user.user_id || "web");
+    return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/production/complete") {
+    const body = await readJson(req);
+    const result = completeOrderProduction(body.order_id, auth.user.user_id || "web");
+    return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/production/release") {
+    const body = await readJson(req);
+    const result = releaseOrderProductionReservation(body.order_id, auth.user.user_id || "web");
+    return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/production/requirement") {
+    const body = await readJson(req);
+    const result = updateOrderMaterialRequirement(body, auth.user.user_id || "web");
+    return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/production/manual-material") {
+    const body = await readJson(req);
+    const result = addManualOrderMaterial(body, auth.user.user_id || "web");
+    return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/catalog") {
+    return sendJson(res, 200, { ok: true, catalog: getCatalogWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/catalog/products") {
+    const body = await readJson(req);
+    const result = createCatalogProduct(body);
+    return sendJson(res, 200, { ok: true, result, catalog: getCatalogWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/catalog/tech-card-items") {
+    const body = await readJson(req);
+    const result = addTechCardItem(body);
+    return sendJson(res, 200, { ok: true, result, catalog: getCatalogWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/purchases") {
+    return sendJson(res, 200, { ok: true, purchases: getPurchaseWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/purchases/requests") {
+    const body = await readJson(req);
+    const request = createPurchaseRequest(body);
+    return sendJson(res, 200, { ok: true, request, purchases: getPurchaseWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/purchases/items") {
+    const body = await readJson(req);
+    const item = addPurchaseRequestItem(body);
+    return sendJson(res, 200, { ok: true, item, purchases: getPurchaseWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/purchases/receive") {
+    const body = await readJson(req);
+    const result = receivePurchaseRequest(body.purchase_request_id, auth.user.user_id || "web");
+    return sendJson(res, 200, { ok: true, result, purchases: getPurchaseWorkspace(), inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/purchases/from-procurement-plan") {
+    const body = await readJson(req);
+    const plan = getProcurementPlan(body);
+    const result = createPurchaseRequestFromProcurementPlan(plan.rows, body);
+    return sendJson(res, 200, { ok: true, result, purchases: getPurchaseWorkspace(), inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/bot-management") {
+    return sendJson(res, 200, { ok: true, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-management/settings") {
+    const body = await readJson(req);
+    const setting = saveBotSetting(body);
+    return sendJson(res, 200, { ok: true, setting, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-management/accounts") {
+    const body = await readJson(req);
+    const account = saveBotAccount(body);
+    return sendJson(res, 200, { ok: true, account, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-management/assistant-settings") {
+    const body = await readJson(req);
+    const settings = saveBotAssistantSettings(body);
+    return sendJson(res, 200, { ok: true, settings, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-management/templates") {
+    const body = await readJson(req);
+    const template = saveBotTemplate(body);
+    return sendJson(res, 200, { ok: true, template, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-management/flow-steps") {
+    const body = await readJson(req);
+    const step = saveBotFlowStep(body);
+    return sendJson(res, 200, { ok: true, step, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/ai-assistant/status") {
+    const botId = url.searchParams.get("bot_id") || "BOT-DEFAULT";
+    return sendJson(res, 200, {
+      ok: true,
+      bot_id: botId,
+      mode: getActiveAiMode(botId),
+      full_assistant_active: isFullAssistantActive(botId)
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ai-assistant/mode") {
+    const body = await readJson(req);
+    const botId = body.bot_id || "BOT-DEFAULT";
+    const subscription = setAiMode(body.mode === "full_assistant" ? "full_assistant" : "economy", {
+      status: body.status || "active",
+      paymentProvider: body.payment_provider || "manual",
+      externalSubscriptionId: body.external_subscription_id || ""
+    });
+    const bot_assistant_settings = setBotAssistantMode(botId, body.mode === "full_assistant" ? "full_assistant" : "economy");
+    return sendJson(res, 200, {
+      ok: true,
+      subscription,
+      bot_assistant_settings,
+      bot_id: botId,
+      mode: getActiveAiMode(botId),
+      full_assistant_active: isFullAssistantActive(botId)
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ai-assistant/command") {
+    const body = await readJson(req);
+    const result = await runAssistantCommand({ text: body.text || "", source: "web", confirmed: body.confirmed === true, botId: body.bot_id || "BOT-DEFAULT" });
+    return sendJson(res, result.ok ? 200 : 400, { ok: result.ok, result });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ai-assistant/voice-transcript") {
+    const body = await readJson(req);
+    const voice = logVoiceCommand({ source: "web", botId: body.bot_id || "BOT-DEFAULT", transcript: body.transcript || "", language: body.language || "uk" });
+    const result = await runAssistantCommand({ text: body.transcript || "", source: "voice", confirmed: body.confirmed === true, botId: body.bot_id || "BOT-DEFAULT" });
+    return sendJson(res, result.ok ? 200 : 400, { ok: result.ok, voice, result });
+  }
+
   return sendJson(res, 404, { ok: false, error: "Unknown API route." });
 }
 
@@ -176,7 +417,20 @@ export async function createWebServer() {
         sendStatic(res, url.pathname);
       }
     } catch (error) {
-      sendJson(res, 500, { ok: false, error: error.message || "Internal server error." });
+      if (error instanceof ValidationError || error.code === "VALIDATION_ERROR") {
+        return sendJson(res, 400, {
+          ok: false,
+          error: formatValidationInstructions(error),
+          validation_errors: error.errors || []
+        });
+      }
+      const userError = createUserFacingError({
+        operationId: `${req.method} ${url.pathname}`,
+        code: error.code || "UNKNOWN_ERROR",
+        details: { message: error.message, stack: error.stack },
+        severity: "CRITICAL"
+      });
+      sendJson(res, 500, { ok: false, error: userError.user_message, error_id: userError.error_id });
     }
   });
 }

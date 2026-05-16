@@ -56,6 +56,13 @@ export function applyEnv(values) {
 }
 
 export function saveEnvPatch(patch, filePath = ENV_PATH) {
+  const validationErrors = validateConnectionPatch(patch);
+  if (validationErrors.length) {
+    const error = new Error(validationErrors.join(" "));
+    error.code = "VALIDATION_ERROR";
+    error.errors = validationErrors;
+    throw error;
+  }
   const existing = loadEnvFile(filePath);
   const next = { ...existing };
   for (const key of KNOWN_KEYS) {
@@ -76,21 +83,87 @@ export function saveEnvPatch(patch, filePath = ENV_PATH) {
 }
 
 export function validateConnectionPatch(patch) {
+  return validateConnectionPatchDetailed(patch).map(error => error.instruction);
+}
+
+export function validateConnectionPatchDetailed(patch) {
   const errors = [];
   const token = String(patch.TELEGRAM_BOT_TOKEN || "").trim();
   const managerChatId = String(patch.MANAGER_CHAT_ID || "").trim();
+  const webhookSecret = String(patch.TELEGRAM_WEBHOOK_SECRET || "").trim();
   const openRouterKey = String(patch.OPENROUTER_API_KEY || "").trim();
+  const botMode = String(patch.BOT_MODE || "").trim();
+  const webhookUrl = String(patch.WEBHOOK_URL || "").trim();
+  const localDataPath = String(patch.LOCAL_DATA_PATH || "").trim();
 
-  if (token && !/^\d{6,}:[A-Za-z0-9_-]{20,}$/.test(token)) {
-    errors.push("Telegram bot token має виглядати як 123456789:ABCdef...");
+  if (token && token !== "********" && !/^\d{6,}:[A-Za-z0-9_-]{20,}$/.test(token)) {
+    errors.push({
+      field: "TELEGRAM_BOT_TOKEN",
+      label: "Telegram bot token",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "Telegram bot token має формат `123456789:ABCdef...`: до двокрапки тільки цифри, після двокрапки довгий token від BotFather."
+    });
   }
 
   if (managerChatId && !/^-?\d{5,}$/.test(managerChatId)) {
-    errors.push("Manager chat ID має бути числом, наприклад 123456789.");
+    errors.push({
+      field: "MANAGER_CHAT_ID",
+      label: "Manager chat ID",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "Manager chat ID має бути числом мінімум 5 цифр, наприклад `123456789` або `-1001234567890` для групи."
+    });
   }
 
-  if (openRouterKey && !/^sk-or-[A-Za-z0-9_-]{12,}/.test(openRouterKey)) {
-    errors.push("OpenRouter API key зазвичай починається з sk-or-.");
+  if (webhookSecret && webhookSecret !== "********" && !/^[A-Za-z0-9_-]{12,128}$/.test(webhookSecret)) {
+    errors.push({
+      field: "TELEGRAM_WEBHOOK_SECRET",
+      label: "Webhook secret",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "Webhook secret має містити 12-128 символів: латинські літери, цифри, `_` або `-`."
+    });
+  }
+
+  if (botMode && !["polling", "webhook"].includes(botMode)) {
+    errors.push({
+      field: "BOT_MODE",
+      label: "Bot mode",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "Bot mode має бути `polling` або `webhook`."
+    });
+  }
+
+  if (webhookUrl && !/^https:\/\/[^\s/$.?#].[^\s]*$/i.test(webhookUrl)) {
+    errors.push({
+      field: "WEBHOOK_URL",
+      label: "Webhook URL",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "Webhook URL має починатися з `https://` і бути повною адресою."
+    });
+  }
+
+  if (openRouterKey && openRouterKey !== "********" && !/^sk-or-[A-Za-z0-9_-]{12,}/.test(openRouterKey)) {
+    errors.push({
+      field: "OPENROUTER_API_KEY",
+      label: "OpenRouter API key",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "OpenRouter API key має починатися з `sk-or-` і містити повний ключ з кабінету OpenRouter."
+    });
+  }
+
+  if (localDataPath && !/\.json$/i.test(localDataPath)) {
+    errors.push({
+      field: "LOCAL_DATA_PATH",
+      label: "Local data path",
+      type: "invalid",
+      category: "invalid_value",
+      instruction: "Local data path має вказувати на `.json` файл, наприклад `./data/local_workspace.json`."
+    });
   }
 
   return errors;

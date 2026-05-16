@@ -7,7 +7,8 @@ const CONVERSION_TABLE = {
   l:   { ml: 1000,  l: 1 },
   // count and pack — no conversion between families
   pcs: { pcs: 1 },
-  pack: { pack: 1 }
+  pack: { pack: 1 },
+  box: { box: 1 }
 };
 
 const VALID_UNITS = new Set(Object.keys(CONVERSION_TABLE));

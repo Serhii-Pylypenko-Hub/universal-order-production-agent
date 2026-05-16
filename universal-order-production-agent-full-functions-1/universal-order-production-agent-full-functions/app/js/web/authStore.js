@@ -44,9 +44,12 @@ export function validateRegistration({ name, email, password }) {
   const cleanEmail = normalizeEmail(email);
   const cleanPassword = String(password || "");
 
-  if (cleanName.length < 2) return "Name must contain at least 2 characters.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return "Enter a valid email address.";
-  if (cleanPassword.length < 8) return "Password must contain at least 8 characters.";
+  if (!cleanName) return "Не заповнено поле \"Ім'я\". Вкажіть ім'я користувача.";
+  if (cleanName.length < 2) return "Поле \"Ім'я\" заповнене некоректно. Вкажіть мінімум 2 символи.";
+  if (!cleanEmail) return "Не заповнено поле \"Пошта\". Вкажіть email для входу.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return "Поле \"Пошта\" заповнене некоректно. Вкажіть email у форматі name@example.com.";
+  if (!cleanPassword) return "Не заповнено поле \"Пароль\". Вкажіть пароль для входу.";
+  if (cleanPassword.length < 8) return "Поле \"Пароль\" заповнене некоректно. Пароль має містити мінімум 8 символів.";
   return "";
 }
 
@@ -57,7 +60,7 @@ export function createUser(input, filePath = DEFAULT_AUTH_PATH) {
   const data = readAuth(filePath);
   const email = normalizeEmail(input.email);
   if (data.users.some(user => user.email === email)) {
-    return { ok: false, error: "A user with this email already exists." };
+    return { ok: false, error: "Користувач з такою поштою вже існує. Увійдіть або використайте іншу пошту." };
   }
 
   const password = hashPassword(input.password);
@@ -78,7 +81,8 @@ export function createUser(input, filePath = DEFAULT_AUTH_PATH) {
 export function verifyLogin({ email, password }, filePath = DEFAULT_AUTH_PATH) {
   const data = readAuth(filePath);
   const user = data.users.find(row => row.email === normalizeEmail(email));
-  if (!user) return { ok: false, error: "Invalid email or password." };
+  if (!email || !password) return { ok: false, error: "Заповніть пошту і пароль для входу." };
+  if (!user) return { ok: false, error: "Пошта або пароль некоректні. Перевірте дані й спробуйте ще раз." };
 
   const candidate = hashPassword(password, user.password_salt);
   const valid = crypto.timingSafeEqual(
@@ -86,7 +90,7 @@ export function verifyLogin({ email, password }, filePath = DEFAULT_AUTH_PATH) {
     Buffer.from(user.password_hash, "hex")
   );
 
-  if (!valid) return { ok: false, error: "Invalid email or password." };
+  if (!valid) return { ok: false, error: "Пошта або пароль некоректні. Перевірте дані й спробуйте ще раз." };
   return { ok: true, user: publicUser(user) };
 }
 

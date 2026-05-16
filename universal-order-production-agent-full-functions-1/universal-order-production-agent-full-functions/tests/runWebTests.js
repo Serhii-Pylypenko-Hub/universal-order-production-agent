@@ -40,9 +40,9 @@ destroySession(session.token, authPath);
 if (getSessionUser(session.token, authPath)) throw new Error("Session destroy failed");
 
 saveEnvPatch(buildEnvPatchFromOnboarding({
-  TELEGRAM_BOT_TOKEN: "token",
-  MANAGER_CHAT_ID: "123",
-  OPENROUTER_API_KEY: "key",
+  TELEGRAM_BOT_TOKEN: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  MANAGER_CHAT_ID: "123456789",
+  OPENROUTER_API_KEY: "sk-or-valid_key_123456789",
   AI_MODEL: "openai/gpt-4o-mini",
   LOCAL_DATA_PATH: "./data/local_workspace.json"
 }), envPath);
@@ -50,7 +50,7 @@ saveEnvPatch(buildEnvPatchFromOnboarding({
 const connections = getConnectionConfig(envPath);
 if (!connections.telegram.token_set) throw new Error("Telegram token was not saved");
 if (!connections.ai.openrouter_key_set) throw new Error("OpenRouter key was not saved");
-if (connections.telegram.manager_chat_id !== "123") throw new Error("Manager chat id mismatch");
+if (connections.telegram.manager_chat_id !== "123456789") throw new Error("Manager chat id mismatch");
 
 if (validateConnectionPatch({ TELEGRAM_BOT_TOKEN: "bad-token" }).length === 0) {
   throw new Error("Invalid Telegram token passed validation");
@@ -61,6 +61,14 @@ if (validateConnectionPatch({ MANAGER_CHAT_ID: "not-a-number" }).length === 0) {
 if (validateConnectionPatch({ OPENROUTER_API_KEY: "bad-key" }).length === 0) {
   throw new Error("Invalid OpenRouter key passed validation");
 }
+try {
+  saveEnvPatch(buildEnvPatchFromOnboarding({ TELEGRAM_BOT_TOKEN: "bad-token" }), envPath);
+  throw new Error("Invalid token was saved");
+} catch (error) {
+  if (error.message === "Invalid token was saved") throw error;
+}
+saveEnvPatch(buildEnvPatchFromOnboarding({ TELEGRAM_BOT_TOKEN: "987654321:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }), envPath);
+if (!getConnectionConfig(envPath).telegram.token_set) throw new Error("Valid Telegram token was not resaved");
 
 fs.rmSync(tempDir, { recursive: true, force: true });
 console.log("Web onboarding tests passed.");

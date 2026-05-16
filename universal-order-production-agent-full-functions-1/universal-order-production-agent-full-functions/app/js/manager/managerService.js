@@ -3,9 +3,10 @@ import { getRows, findRows, updateRow, appendRow } from "../data/rowRepository.j
 import { getActivePurchaseRequests } from "../purchases/purchaseService.js";
 import { getOpenTasks, updateTaskStatus } from "../tasks/taskService.js";
 import { addStock, getAvailableStock } from "../stock/stockService.js";
+import { receiveStockLot } from "../stock/stockLotService.js";
 import { id } from "../utils/ids.js";
 import { confirmPayment } from "../orders/paymentService.js";
-import { confirmPickup, markShipped, markReadyForPickup } from "../orders/deliveryService.js";
+import { confirmPickup, markShipped } from "../orders/deliveryService.js";
 import { getPendingHandoffs, resolveHandoff } from "../orders/handoffService.js";
 import { getSetting, setSetting, getAllSettings } from "./settingsService.js";
 import { getFailedOperationsSummary } from "../utils/retryService.js";
@@ -13,6 +14,7 @@ import { runDeadlineCheck } from "../tasks/deadlineMonitorService.js";
 import { healthCheckWorkspace } from "../setup/healthCheck.js";
 import { nowIso } from "../utils/time.js";
 import { createDiscountRule } from "../pricing/discountService.js";
+import { completeOrderProduction } from "../production/productionService.js";
 
 // Inline keyboards for Telegram
 function ordersKeyboard() {
@@ -86,7 +88,7 @@ export async function handleManagerCommand(command, args = []) {
     }
 
     case "/ready": {
-      markReadyForPickup(args[0]);
+      completeOrderProduction(args[0], "manager_bot");
       return { text: `✅ Замовлення ${args[0]} готове.` };
     }
 
@@ -127,9 +129,20 @@ export async function handleManagerCommand(command, args = []) {
     case "/receive_purchase": {
       const [prId] = args;
       const items = findRows("PurchaseRequestItems", r => r.purchase_request_id === prId);
+      const components = new Map(getRows("Components").map(component => [component.component_id, component]));
       for (const item of items) {
-        if (item.component_id && item.quantity) {
-          addStock(item.component_id, Number(item.quantity), `purchase_received:${prId}`);
+        if (item.component_id && item.total_qty) {
+          const component = components.get(item.component_id);
+          receiveStockLot({
+            component_id: item.component_id,
+            qty: Number(item.total_qty),
+            unit: item.unit || component?.unit,
+            unit_cost: Number(item.expected_unit_cost || component?.unit_cost || 0),
+            purchase_request_id: prId,
+            reason: `purchase_received:${prId}`,
+            created_by: "manager"
+          });
+          updateRow("PurchaseRequestItems", "purchase_request_item_id", item.purchase_request_item_id, { status: "Received" });
         }
       }
       updateRow("PurchaseRequests", "purchase_request_id", prId, { status: "Received", received_at: nowIso() });

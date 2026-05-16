@@ -1,7 +1,7 @@
 import { appendRow, updateRow, findOne, findRows } from "../data/rowRepository.js";
 import { id } from "../utils/ids.js";
 import { nowIso } from "../utils/time.js";
-import { getProductByName, calculateEstimatedCost, calculateRequiredComponents } from "./productService.js";
+import { getProductByName, getComponent, calculateEstimatedCost, calculateRequiredComponents } from "./productService.js";
 import { calculateFinalRequiredComponents, calculateCustomizationTotals, saveOrderItemCustomizations, summarizeCustomizations } from "../customizations/customizationService.js";
 import { saveOrderPreferences } from "../clients/clientPreferenceService.js";
 import { reserveStock, consumeReservedStock, releaseReservation } from "../stock/stockService.js";
@@ -13,6 +13,7 @@ import { getActiveDiscountRules, getClientPersonalPrice, calculateFinalPrice } f
 import { getClientOrderIndex } from "./orderCounterService.js";
 import { validateOrderTransition, ORDER_STATUSES } from "./stateGuardService.js";
 import { withIdempotency } from "../data/idempotencyService.js";
+import { assertValid } from "../errors/validationService.js";
 
 export function createClientIfNeeded({ name, contact = "", preferences = "", restrictions_or_allergies = "" }) {
   let client = findOne("Clients", r => r.contact && r.contact === contact);
@@ -43,6 +44,17 @@ function createOrderInternal(orderInput) {
     });
     return { status: "HANDOFF_REQUIRED", task };
   }
+
+  assertValid("Створення замовлення", orderInput, {
+    required: [
+      { name: "product_name", label: "Продукт", instruction_uk: "Оберіть продукт із каталогу або створіть новий продукт перед оформленням замовлення." },
+      { name: "quantity", label: "Кількість", instruction_uk: "Вкажіть кількість або вагу замовлення більше нуля." },
+      { name: "desired_date", label: "Дата виконання", instruction_uk: "Вкажіть дату, на яку потрібно виконати замовлення." }
+    ],
+    numbers: [
+      { name: "quantity", label: "Кількість", positive: true }
+    ]
+  });
 
   const product = getProductByName(orderInput.product_name);
   if (!product) {
@@ -130,6 +142,7 @@ function createOrderInternal(orderInput) {
 
   const finalRequirements = calculateFinalRequiredComponents(product.product_id, orderInput.quantity, orderInput.customizations || []);
   const required = finalRequirements.required_components;
+  saveOrderMaterialRequirements(order.order_id, orderItem.order_item_id, product.product_id, required);
   const reservationResult = reserveStock(order.order_id, required);
   const missing = reservationResult.filter(x => x.missing > 0);
 
@@ -153,6 +166,30 @@ function createOrderInternal(orderInput) {
 
   logActivity({ entityType: "Order", entityId: order.order_id, action: "createOrder", newValue: { orderInput, cost: totalCost, customizationTotals, proposedPrice } });
   return getOrder(order.order_id);
+}
+
+function saveOrderMaterialRequirements(orderId, orderItemId, productId, requirements) {
+  for (const item of requirements) {
+    const component = getComponent(item.component_id);
+    const unitCost = Number(component?.unit_cost || 0);
+    appendRow("OrderMaterialRequirements", {
+      requirement_id: id("REQ"),
+      order_id: orderId,
+      order_item_id: orderItemId,
+      product_id: productId,
+      component_id: item.component_id,
+      source: item.source || "TECH_CARD",
+      required_qty: item.required_qty,
+      unit: item.unit,
+      estimated_unit_cost: unitCost,
+      estimated_total_cost: Number((Number(item.required_qty || 0) * unitCost).toFixed(2)),
+      manager_override: false,
+      override_reason: "",
+      status: "Planned",
+      created_at: nowIso(),
+      updated_at: nowIso()
+    });
+  }
 }
 
 export function getOrder(orderId) {
@@ -186,7 +223,5 @@ export function cancelOrder(orderId) {
 }
 
 export function startProduction(orderId) {
-  const order = updateOrderStatus(orderId, "InProduction");
-  consumeReservedStock(orderId);
-  return order;
+  return updateOrderStatus(orderId, "InProduction");
 }

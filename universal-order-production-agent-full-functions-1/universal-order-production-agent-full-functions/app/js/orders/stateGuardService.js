@@ -27,10 +27,6 @@ function hasReservations(orderId) {
   return findRows("Reservations", r => r.order_id === orderId && ["Reserved", "Used"].includes(r.status)).length > 0;
 }
 
-function hasCalendarSlot(orderId) {
-  return findRows("CalendarLog", r => r.order_id === orderId && r.status !== "Cancelled").length > 0;
-}
-
 export function validateOrderTransition(order, nextStatus) {
   if (!order) return { ok: false, reason: "ORDER_NOT_FOUND" };
   if (!ORDER_STATUSES.includes(nextStatus)) return { ok: false, reason: "UNKNOWN_STATUS" };
@@ -42,10 +38,6 @@ export function validateOrderTransition(order, nextStatus) {
 
   if (nextStatus === "InProduction" && !hasReservations(order.order_id)) {
     return { ok: false, reason: "NO_RESERVATIONS_FOR_PRODUCTION" };
-  }
-
-  if (nextStatus === "InProduction" && !hasCalendarSlot(order.order_id)) {
-    return { ok: false, reason: "NO_CALENDAR_SLOT_FOR_PRODUCTION" };
   }
 
   if (["Sent", "Delivered", "PickedUp"].includes(nextStatus) && order.status !== "Ready") {

@@ -4,6 +4,7 @@ node_modules/
 releases/
 .env
 data/*.secret.json
+data/*.log
 data/web_auth.json
 credentials.json
 .DS_Store

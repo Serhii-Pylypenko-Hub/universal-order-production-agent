@@ -194,8 +194,13 @@ async function handleClientMessage(chatId, text, message) {
 
   } catch (err) {
     saveFailedOperation("telegram.handleClientMessage", { chatId, text, error: err.message }, err.message);
-    const userError = createUserFacingError("ORDER_PROCESSING_FAILED", { chatId });
-    await sendTelegramMessage(chatId, userError.userMessage);
+    const userError = createUserFacingError({
+      operationId: "telegram.handleClientMessage",
+      code: "ORDER_PROCESSING_FAILED",
+      details: { chatId, message: err.message, stack: err.stack },
+      severity: "CRITICAL"
+    });
+    await sendTelegramMessage(chatId, userError.user_message);
   }
 }
 

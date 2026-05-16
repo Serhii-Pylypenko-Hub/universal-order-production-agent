@@ -3,6 +3,14 @@
 ## Unreleased
 
 Added:
+- ERP inventory design document with FIFO, stock lots, manager manual lot selection, manual overrides, purchase receipt lots, and bot-management rules.
+- Schema version `0.7.0` with `StockLots`, `ReservationLots`, `OrderMaterialRequirements`, `ProductionRuns`, `WasteWriteOffs`, `StockAdjustments`, `Warehouses`, `Suppliers`, `SupplierMaterials`, `Alerts`, and bot-management sheets.
+- Validation and table UI requirements for spreadsheet-like entry, Ukrainian field-level instructions, safe system errors, local developer alerts, and optional GitHub issue reporting.
+- Inventory workspace API and web UI for material creation, duplicate warnings, lot receipt, FIFO lot visibility, active order material plans, detailed Ukrainian validation, and spreadsheet-style keyboard navigation.
+- Production workflow API and UI actions for starting production, completing with stock consumption, releasing reserves, and manually changing or adding order materials with automatic re-reservation.
+- Catalog/tech-card, purchase, and bot-management workspaces with APIs and web forms for products, recipes, purchase receipt, bot settings, templates, and order-intake flow steps.
+- Two AI usage modes: economy mode and full assistant mode with subscription status, AI permissions, text commands, browser voice transcript handling, action logs, and confirmation for mutating actions.
+- AI assistant guardrails: no code/file/schema/env/dependency/deployment changes; only authenticated business UI/API actions are allowed.
 - Web onboarding cabinet for registration, login, resource connection, workspace setup, and dashboard.
 - `app/js/web/*` services for auth/session storage, environment configuration, HTTP API, and dashboard summaries.
 - `app/web/*` browser UI for guided setup and operations overview.
@@ -29,6 +37,11 @@ Added:
 - Manager discount commands for amount thresholds, every-N-order promotions, listing, and disabling rules.
 - Manager manual order price command.
 - Telegram cakes demo documentation with client and manager test scenarios.
+- Stock control block with material `min_qty`, configurable procurement horizon, shortage highlighting, and automatic draft purchase request creation.
+- Inventory reports for final balance on a selected date and monthly stock movement differences.
+- AI read/analyze commands for inventory balance reports and monthly stock differences.
+- Stepper buttons for numeric web fields such as prices, quantities, days, and months.
+- Backend/web/AI coverage audit document.
 
 ## 0.6.0 — Connection Layer
 

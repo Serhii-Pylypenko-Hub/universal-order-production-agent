@@ -35,23 +35,23 @@
 
           <form id="registerForm" class="form">
             <label><span data-i18n="nameLabel">Ім'я</span>
-              <input name="name" autocomplete="name" required minlength="2">
+              <input name="name" autocomplete="name" data-label="Ім'я" data-instruction="Не заповнено поле Ім'я. Вкажіть ім'я мінімум 2 символи." required minlength="2">
             </label>
             <label><span data-i18n="emailLabel">Пошта</span>
-              <input name="email" type="email" autocomplete="email" required>
+              <input name="email" type="email" autocomplete="email" data-label="Пошта" data-instruction="Не заповнено поле Пошта. Вкажіть email у форматі name@example.com." required>
             </label>
             <label><span data-i18n="passwordLabel">Пароль</span>
-              <input name="password" type="password" autocomplete="new-password" required minlength="8">
+              <input name="password" type="password" autocomplete="new-password" data-label="Пароль" data-instruction="Не заповнено поле Пароль. Вкажіть пароль мінімум 8 символів." required minlength="8">
             </label>
             <button class="primary" type="submit" data-i18n="createAccount">Створити акаунт</button>
           </form>
 
           <form id="loginForm" class="form hidden">
             <label><span data-i18n="emailLabel">Пошта</span>
-              <input name="email" type="email" autocomplete="email" required>
+              <input name="email" type="email" autocomplete="email" data-label="Пошта" data-instruction="Не заповнено поле Пошта. Вкажіть email для входу." required>
             </label>
             <label><span data-i18n="passwordLabel">Пароль</span>
-              <input name="password" type="password" autocomplete="current-password" required>
+              <input name="password" type="password" autocomplete="current-password" data-label="Пароль" data-instruction="Не заповнено поле Пароль. Вкажіть пароль для входу." required>
             </label>
             <button class="primary" type="submit" data-i18n="signIn">Увійти</button>
           </form>
@@ -71,11 +71,21 @@
               <button class="lang-button" type="button" data-lang="en">EN</button>
             </div>
             <span id="userLabel"></span>
+            <button class="secondary" id="helpButton" type="button">Довідка</button>
             <button class="secondary" id="logoutButton" type="button" data-i18n="logout">Вийти</button>
           </div>
         </header>
 
-        <section class="grid">
+        <nav class="module-nav" aria-label="Модулі кабінету">
+          <button class="module-tab active" type="button" data-module-target="dashboard">Огляд</button>
+          <button class="module-tab" type="button" data-module-target="inventory">Склад</button>
+          <button class="module-tab" type="button" data-module-target="production">Виробництво</button>
+          <button class="module-tab" type="button" data-module-target="operations">Операції</button>
+          <button class="module-tab" type="button" data-module-target="assistant">AI</button>
+          <button class="module-tab" type="button" data-module-target="setup">Налаштування</button>
+        </nav>
+
+        <section class="grid module-section hidden" data-module="setup">
           <form class="panel connections" id="connectionsForm">
             <div class="panel-head">
               <div>
@@ -93,13 +103,13 @@
 
             <div class="field-grid">
               <label class="is-required"><span>Telegram bot token <em data-i18n="requiredBadge">обов'язково</em></span>
-                <input name="TELEGRAM_BOT_TOKEN" placeholder="123456:ABC...">
+                <input name="TELEGRAM_BOT_TOKEN" placeholder="123456789:ABCdef..." autocomplete="off" pattern="^\d{6,}:[A-Za-z0-9_-]{20,}$" title="Скопіюйте повний token з BotFather: цифри, двокрапка, довгий ключ.">
               </label>
               <label class="is-required"><span>Manager chat ID <em data-i18n="requiredBadge">обов'язково</em></span>
-                <input name="MANAGER_CHAT_ID" placeholder="123456789">
+                <input name="MANAGER_CHAT_ID" placeholder="123456789" autocomplete="off" pattern="^-?\d{5,}$" title="Chat ID має бути числом. Для групи може починатися з -100.">
               </label>
               <label><span>Webhook secret</span>
-                <input name="TELEGRAM_WEBHOOK_SECRET" placeholder="random-secret">
+                <input name="TELEGRAM_WEBHOOK_SECRET" placeholder="random-secret-123" autocomplete="off" pattern="^[A-Za-z0-9_-]{12,128}$" title="12-128 символів: латинські літери, цифри, _ або -.">
               </label>
               <label><span>Bot mode</span>
                 <select name="BOT_MODE">
@@ -108,10 +118,10 @@
                 </select>
               </label>
               <label><span>Webhook URL</span>
-                <input name="WEBHOOK_URL" placeholder="https://domain.com/webhook">
+                <input name="WEBHOOK_URL" placeholder="https://domain.com/webhook" autocomplete="url">
               </label>
               <label class="is-required"><span>OpenRouter API key <em data-i18n="requiredBadge">обов'язково</em></span>
-                <input name="OPENROUTER_API_KEY" placeholder="sk-or-...">
+                <input name="OPENROUTER_API_KEY" placeholder="sk-or-v1-..." autocomplete="off" pattern="^sk-or-[A-Za-z0-9_-]{12,}" title="Ключ має починатися з sk-or-.">
               </label>
               <label><span>AI model</span>
                 <input name="AI_MODEL" value="openai/gpt-4o-mini">
@@ -154,7 +164,7 @@
           </aside>
         </section>
 
-        <section class="panel dashboard">
+        <section class="panel dashboard module-section" data-module="dashboard">
           <div class="panel-head">
             <div>
               <p class="eyebrow" data-i18n="operations">Операції</p>
@@ -180,9 +190,364 @@
               <div id="allStockList" class="list"></div>
             </div>
           </div>
+          <div class="report-panel">
+            <div class="report-controls">
+              <label><span>Баланс на дату</span><input id="reportBalanceDate" type="date"></label>
+              <label><span>Місяців</span><input id="reportMonths" type="number" min="1" max="24" step="1" value="6"></label>
+              <button class="secondary" id="refreshReportsButton" type="button">Оновити звіти</button>
+            </div>
+            <div class="report-grid">
+              <div>
+                <h3>Остаточний баланс</h3>
+                <div class="data-table report-table" id="balanceReportTable" tabindex="0"></div>
+              </div>
+              <div>
+                <h3>Помісячні різниці</h3>
+                <div class="data-table report-table" id="monthlyReportTable" tabindex="0"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel inventory-workspace module-section" id="inventoryWorkspace" data-module="inventory">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Склад</p>
+              <h2>Матеріали, партії та залишки</h2>
+            </div>
+            <button class="secondary" id="refreshInventoryButton" type="button">Оновити склад</button>
+          </div>
+
+          <div class="procurement-panel" id="procurementPanel">
+            <div class="procurement-head">
+              <div>
+                <p class="eyebrow">Контроль залишків</p>
+                <h3>План закупівель</h3>
+              </div>
+              <div class="procurement-controls">
+                <label class="switch-row"><input id="procurementEnabled" type="checkbox" checked> <span>Увімкнено</span></label>
+                <label><span>Днів</span><input id="procurementHorizonDays" type="number" min="1" max="31" step="1" value="7"></label>
+                <button class="secondary" id="saveProcurementSettingsButton" type="button">Застосувати</button>
+                <button class="primary" id="createProcurementPurchaseButton" type="button">Створити заявку</button>
+              </div>
+            </div>
+            <p class="message" id="procurementMessage"></p>
+            <div class="data-table procurement-table" id="procurementPlanTable" tabindex="0"></div>
+          </div>
+
+          <div class="inventory-layout">
+            <form class="inventory-form" id="materialForm" novalidate>
+              <h3>Новий матеріал</h3>
+              <label><span>Назва матеріалу</span>
+                <input name="name" data-label="Назва матеріалу" data-instruction="Вкажіть назву матеріалу, наприклад Цукор білий." required>
+              </label>
+              <label><span>Одиниця виміру</span>
+                <select name="unit" data-label="Одиниця виміру" data-instruction="Оберіть базову одиницю для матеріалу." required>
+                  <option value="">Оберіть</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="l">l</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                  <option value="pack">pack</option>
+                  <option value="box">box</option>
+                </select>
+              </label>
+              <label><span>Базова ціна</span>
+                <input name="unit_cost" type="number" min="0" step="0.01" data-label="Базова ціна">
+              </label>
+              <label><span>Мінімальний залишок</span>
+                <input name="min_qty" type="number" min="0" step="0.001" data-label="Мінімальний залишок" data-instruction="Вкажіть мінімальну кількість, нижче якої система має підсвітити матеріал для закупівлі. Якщо поріг не потрібен, залиште 0.">
+              </label>
+              <label><span>Опис</span>
+                <input name="description" data-label="Опис">
+              </label>
+              <div class="form-actions">
+                <button class="primary" type="submit">Створити матеріал</button>
+                <button class="secondary" type="button" id="forceMaterialButton">Створити попри схожі</button>
+              </div>
+              <p class="message" id="materialMessage"></p>
+              <div class="suggestions" id="materialSuggestions"></div>
+            </form>
+
+            <form class="inventory-form" id="lotForm" novalidate>
+              <h3>Прийняти партію</h3>
+              <label><span>Матеріал</span>
+                <select name="component_id" data-label="Матеріал" data-instruction="Оберіть матеріал із довідника. Якщо його немає, спочатку створіть матеріал." required></select>
+              </label>
+              <label><span>Кількість</span>
+                <input name="qty" type="number" min="0.000001" step="0.001" data-label="Кількість" data-instruction="Вкажіть кількість більше нуля." required>
+              </label>
+              <label><span>Одиниця</span>
+                <select name="unit" data-label="Одиниця" data-instruction="Оберіть одиницю, сумісну з матеріалом." required>
+                  <option value="">Оберіть</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="l">l</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                  <option value="pack">pack</option>
+                  <option value="box">box</option>
+                </select>
+              </label>
+              <label><span>Ціна за одиницю</span>
+                <input name="unit_cost" type="number" min="0.01" step="0.01" data-label="Ціна за одиницю" data-instruction="Вкажіть закупівельну ціну за одиницю." required>
+              </label>
+              <label><span>Термін придатності</span>
+                <input name="expires_at" type="date" data-label="Термін придатності">
+              </label>
+              <label><span>Примітка</span>
+                <input name="notes" data-label="Примітка">
+              </label>
+              <button class="primary" type="submit">Прийняти на склад</button>
+              <p class="message" id="lotMessage"></p>
+            </form>
+          </div>
+
+          <div class="table-toolbar">
+            <span>Enter - зберегти форму</span>
+            <span>Ctrl+Enter - виконати основну дію</span>
+            <span>Esc - прибрати повідомлення</span>
+            <span>Стрілки/Tab - рух по таблиці</span>
+          </div>
+        </section>
+
+        <section class="panel production-workspace module-section hidden" data-module="production">
+          <div class="production-panel" id="productionPanel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Виробництво</p>
+                <h3 id="productionTitle">Замовлення</h3>
+              </div>
+              <div class="form-actions">
+                <button class="primary" type="button" id="startProductionButton">Взяти в роботу</button>
+                <button class="primary" type="button" id="completeProductionButton">Завершити і списати</button>
+                <button class="secondary" type="button" id="releaseProductionButton">Повернути резерв</button>
+                <button class="secondary" type="button" id="closeProductionPanelButton">Закрити</button>
+              </div>
+            </div>
+            <p class="message" id="productionMessage"></p>
+            <div class="data-table" id="productionMaterialsTable" tabindex="0"></div>
+            <form class="inventory-form" id="manualMaterialForm" novalidate>
+              <h3>Ручна зміна матеріалу</h3>
+              <input name="requirement_id" type="hidden">
+              <input name="order_id" type="hidden">
+              <label><span>Матеріал</span>
+                <select name="component_id" data-label="Матеріал" data-instruction="Оберіть матеріал для замовлення." required></select>
+              </label>
+              <label><span>Кількість</span>
+                <input name="required_qty" type="number" min="0.000001" step="0.001" data-label="Кількість" data-instruction="Вкажіть кількість більше нуля." required>
+              </label>
+              <label><span>Одиниця</span>
+                <select name="unit" data-label="Одиниця" data-instruction="Оберіть одиницю виміру." required>
+                  <option value="">Оберіть</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="l">l</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                  <option value="pack">pack</option>
+                  <option value="box">box</option>
+                </select>
+              </label>
+              <label><span>Причина</span>
+                <input name="override_reason" data-label="Причина" data-instruction="Напишіть причину зміни, наприклад заміна матеріалу або уточнення рецептури." required>
+              </label>
+              <div class="form-actions">
+                <button class="primary" type="submit">Зберегти зміну</button>
+                <button class="secondary" type="button" id="addManualMaterialButton">Додати як новий рядок</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel inventory-workspace module-section" data-module="inventory">
+          <div class="tables inventory-tables">
+            <div>
+              <h3>Залишки матеріалів</h3>
+              <div class="data-table" id="materialsTable" tabindex="0"></div>
+            </div>
+            <div>
+              <h3>Партії FIFO</h3>
+              <div class="data-table" id="lotsTable" tabindex="0"></div>
+            </div>
+            <div>
+              <h3>Замовлення в роботі</h3>
+              <div class="data-table" id="orderMaterialsTable" tabindex="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel operations-workspace module-section hidden" data-module="operations">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Операційні модулі</p>
+              <h2>Продукти, закупки та бот</h2>
+            </div>
+            <button class="secondary" id="refreshOperationsButton" type="button">Оновити модулі</button>
+          </div>
+
+          <div class="module-grid">
+            <form class="inventory-form" id="productForm" novalidate>
+              <h3>Новий продукт</h3>
+              <label><span>Назва</span><input name="name" data-label="Назва" data-instruction="Не заповнено поле Назва. Вкажіть назву продукту, наприклад Chocolate Cake." required></label>
+              <label><span>Одиниця продажу</span>
+                <select name="unit" data-label="Одиниця продажу" data-instruction="Не обрано одиницю продажу. Оберіть kg, pcs або box." required>
+                  <option value="">Оберіть</option>
+                  <option value="kg">kg</option>
+                  <option value="pcs">pcs</option>
+                  <option value="box">box</option>
+                </select>
+              </label>
+              <label><span>Базова ціна</span><input name="base_price" type="number" min="0.01" step="0.01" data-label="Базова ціна" data-instruction="Некоректно заповнено базову ціну. Вкажіть число більше 0." required></label>
+              <label><span>Маржа %</span><input name="margin_percent" type="number" step="0.01" data-label="Маржа" data-instruction="Не заповнено або некоректно заповнено маржу. Вкажіть число, наприклад 30." required></label>
+              <label><span>Опис</span><input name="description" data-label="Опис"></label>
+              <button class="primary" type="submit">Створити продукт</button>
+              <p class="message" id="productMessage"></p>
+            </form>
+
+            <form class="inventory-form" id="techCardForm" novalidate>
+              <h3>Рядок техкарти</h3>
+              <label><span>Продукт</span><select name="product_id" data-label="Продукт" data-instruction="Не обрано продукт. Спочатку створіть продукт або виберіть його зі списку." required></select></label>
+              <label><span>Матеріал</span><select name="component_id" data-label="Матеріал" data-instruction="Не обрано матеріал. Створіть матеріал у Складі або виберіть існуючий." required></select></label>
+              <label><span>Кількість на одиницю</span><input name="qty_per_unit" type="number" min="0.000001" step="0.001" data-label="Кількість на одиницю" data-instruction="Некоректно заповнено кількість на одиницю. Вкажіть число більше 0." required></label>
+              <label><span>Одиниця</span>
+                <select name="unit" data-label="Одиниця" data-instruction="Не обрано одиницю матеріалу для техкарти." required>
+                  <option value="">Оберіть</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="l">l</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                  <option value="pack">pack</option>
+                  <option value="box">box</option>
+                </select>
+              </label>
+              <button class="primary" type="submit">Додати в техкарту</button>
+              <p class="message" id="techCardMessage"></p>
+            </form>
+
+            <form class="inventory-form" id="purchaseForm" novalidate>
+              <h3>Закупка</h3>
+              <label><span>Нотатка</span><input name="manager_note" data-label="Нотатка"></label>
+              <button class="primary" type="button" id="createPurchaseButton">Створити закупку</button>
+              <label><span>Закупка</span><select name="purchase_request_id" data-label="Закупка" data-instruction="Не обрано закупку. Натисніть Створити закупку або виберіть існуючу." required></select></label>
+              <label><span>Матеріал</span><select name="component_id" data-label="Матеріал" data-instruction="Не обрано матеріал для закупки." required></select></label>
+              <label><span>Кількість</span><input name="required_qty" type="number" min="0.000001" step="0.001" data-label="Кількість" data-instruction="Некоректно заповнено кількість. Вкажіть число більше 0." required></label>
+              <label><span>Одиниця</span><select name="unit" data-label="Одиниця" data-instruction="Не обрано одиницю для закупки." required></select></label>
+              <label><span>Очікувана ціна</span><input name="expected_unit_cost" type="number" min="0" step="0.01" data-label="Очікувана ціна"></label>
+              <div class="form-actions">
+                <button class="primary" type="submit">Додати позицію</button>
+                <button class="secondary" type="button" id="receivePurchaseButton">Прийняти закупку</button>
+              </div>
+              <p class="message" id="purchaseMessage"></p>
+            </form>
+
+            <form class="inventory-form" id="botSettingForm" novalidate>
+              <h3>Керування ботом</h3>
+              <label><span>ID бота</span><input name="bot_id" data-label="ID бота" placeholder="BOT-DEFAULT"></label>
+              <label><span>Назва бота</span><input name="name" data-label="Назва бота" placeholder="Основний Telegram бот"></label>
+              <label><span>Канал</span>
+                <select name="channel" data-label="Канал">
+                  <option value="telegram">Telegram</option>
+                  <option value="web_chat">Web chat</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="other">Інший</option>
+                </select>
+              </label>
+              <label><span>Режим бота</span>
+                <select name="bot_mode" data-label="Режим бота">
+                  <option value="polling">Polling</option>
+                  <option value="webhook">Webhook</option>
+                </select>
+              </label>
+              <label><span>Manager chat ID</span><input name="manager_chat_id" data-label="Manager chat ID" placeholder="123456789"></label>
+              <button class="secondary" type="button" id="saveBotAccountButton">Зберегти бота</button>
+              <label><span>AI режим бота</span>
+                <select name="assistant_mode" data-label="AI режим бота">
+                  <option value="economy">Економний</option>
+                  <option value="full_assistant">Full Assistant</option>
+                </select>
+              </label>
+              <label><span>Дозволені статуси</span><input name="allowed_order_statuses" data-label="Дозволені статуси" value="New,ProposalSent,Scheduled,InProduction,Ready,Delivered,Cancelled"></label>
+              <div class="checkbox-grid">
+                <label><input type="checkbox" name="allow_voice_control" value="true"> <span>Голос</span></label>
+                <label><input type="checkbox" name="allow_send_messages" value="true"> <span>Повідомлення</span></label>
+                <label><input type="checkbox" name="allow_order_status_change" value="true"> <span>Статуси</span></label>
+                <label><input type="checkbox" name="allow_read_recipes" value="true" checked> <span>Рецепти</span></label>
+              </div>
+              <button class="secondary" type="button" id="saveBotAssistantButton">Зберегти Full Assistant</button>
+              <label><span>Налаштування</span><input name="key" data-label="Налаштування" data-instruction="Не заповнено ключ налаштування. Наприклад max_clarification_count." placeholder="max_clarification_count" required></label>
+              <label><span>Значення</span><input name="value" data-label="Значення" data-instruction="Не заповнено значення налаштування." required></label>
+              <button class="primary" type="submit">Зберегти налаштування</button>
+              <label><span>Ключ шаблону</span><input name="template_key" data-label="Ключ шаблону" placeholder="new_client_greeting"></label>
+              <label><span>Текст шаблону</span><input name="template_text" data-label="Текст шаблону"></label>
+              <button class="secondary" type="button" id="saveBotTemplateButton">Зберегти шаблон</button>
+              <label><span>Крок флоу</span><input name="step_key" data-label="Крок флоу" placeholder="desired_date"></label>
+              <label><span>Назва кроку</span><input name="title" data-label="Назва кроку" placeholder="Дата"></label>
+              <label><span>Питання клієнту</span><input name="prompt_text" data-label="Питання клієнту" placeholder="На яку дату потрібно виконати замовлення?"></label>
+              <label><span>Порядок</span><input name="sort_order" type="number" step="1" data-label="Порядок" placeholder="30"></label>
+              <button class="secondary" type="button" id="saveBotFlowStepButton">Зберегти крок флоу</button>
+              <p class="message" id="botMessage"></p>
+            </form>
+          </div>
+
+          <div class="tables inventory-tables">
+            <div>
+              <h3>Продукти і техкарти</h3>
+              <div class="data-table" id="catalogTable" tabindex="0"></div>
+            </div>
+            <div>
+              <h3>Закупки</h3>
+              <div class="data-table" id="purchaseTable" tabindex="0"></div>
+            </div>
+            <div>
+              <h3>Бот: флоу і шаблони</h3>
+              <div class="data-table" id="botTable" tabindex="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel ai-assistant-workspace module-section hidden" data-module="assistant">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">AI-асистент</p>
+              <h2>Текстове і голосове керування</h2>
+            </div>
+            <div class="status-strip" id="aiModeStatus"></div>
+          </div>
+          <div class="ai-command-box">
+            <label><span>Команда асистенту</span>
+              <input id="aiCommandInput" placeholder="Наприклад: покажи дефіцит або покажи замовлення ORD-..." autocomplete="off">
+            </label>
+            <div class="form-actions">
+              <button class="primary" id="runAiCommandButton" type="button">Виконати</button>
+              <button class="secondary" id="confirmAiCommandButton" type="button">Підтвердити дію</button>
+              <button class="secondary" id="voiceAiCommandButton" type="button">Голос</button>
+              <button class="secondary" id="economyAiModeButton" type="button">Економний</button>
+              <button class="secondary" id="fullAiModeButton" type="button">Повний AI</button>
+            </div>
+          </div>
+          <p class="message" id="aiAssistantMessage"></p>
+          <div class="data-table ai-result" id="aiAssistantResult" tabindex="0"></div>
         </section>
       </section>
     </main>
+    <section class="help-overlay hidden" id="helpOverlay" aria-hidden="true">
+      <div class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <div class="help-head">
+          <div>
+            <p class="eyebrow">Довідка</p>
+            <h2 id="helpTitle">Інструкція користувача</h2>
+          </div>
+          <button class="secondary" id="closeHelpButton" type="button">Закрити</button>
+        </div>
+        <label class="help-search"><span>Пошук по інструкції</span>
+          <input id="helpSearchInput" placeholder="Наприклад: склад, FIFO, гарячі клавіші, AI" autocomplete="off">
+        </label>
+        <div class="help-content" id="helpContent" tabindex="0"></div>
+      </div>
+    </section>
     <script src="/app.js" type="module"></script>
   </body>
 </html>

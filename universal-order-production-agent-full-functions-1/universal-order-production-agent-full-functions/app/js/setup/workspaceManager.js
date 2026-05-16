@@ -5,6 +5,9 @@ import { appendRow, findOne } from "../data/rowRepository.js";
 import { id } from "../utils/ids.js";
 import { nowIso } from "../utils/time.js";
 import { logActivity } from "../audit/auditService.js";
+import { normalizeMaterialName, ensureDefaultWarehouse } from "../stock/materialService.js";
+import { receiveStockLot } from "../stock/stockLotService.js";
+import { seedAiSubscriptionDefaults } from "../ai/subscriptionService.js";
 
 export function initializeWorkspace(template = "empty") {
   const store = getStore();
@@ -19,6 +22,9 @@ export function initializeWorkspace(template = "empty") {
 
   seedBaseTemplates();
   seedCodeRequirements();
+  seedValidationAndTableUiSettings();
+  seedBotManagement();
+  seedAiSubscriptionDefaults();
 
   if (template === "cakes") {
     seedCakesDemo();
@@ -43,8 +49,220 @@ function seedBaseTemplates() {
   }
 }
 
+function seedValidationAndTableUiSettings() {
+  const validationRules = [
+    ["VAL-MAT-001", "Component", "name", "Назва матеріалу", "required", "", "Вкажіть коротку зрозумілу назву матеріалу, наприклад Цукор білий."],
+    ["VAL-MAT-002", "Component", "unit", "Одиниця виміру", "required", "", "Оберіть одиницю виміру: kg, g, l, ml, pcs, pack або box."],
+    ["VAL-STOCK-001", "StockLot", "qty", "Кількість", "positive_number", "", "Вкажіть кількість більше нуля."],
+    ["VAL-STOCK-002", "StockLot", "unit_cost", "Ціна за одиницю", "positive_number", "", "Вкажіть закупівельну ціну за базову одиницю матеріалу."],
+    ["VAL-ORDER-001", "Order", "product_name", "Продукт", "required", "", "Оберіть продукт або створіть новий продукт перед замовленням."],
+    ["VAL-ORDER-002", "Order", "quantity", "Кількість", "positive_number", "", "Вкажіть кількість або вагу замовлення більше нуля."],
+    ["VAL-ORDER-003", "Order", "desired_date", "Дата виконання", "required", "", "Вкажіть дату, на яку потрібно виконати замовлення."]
+  ];
+
+  for (const [validation_rule_id, entity_type, field_name, label_uk, rule_type, rule_value, instruction_uk] of validationRules) {
+    if (!findOne("ValidationRules", row => row.validation_rule_id === validation_rule_id)) {
+      appendRow("ValidationRules", {
+        validation_rule_id,
+        entity_type,
+        field_name,
+        label_uk,
+        rule_type,
+        rule_value,
+        instruction_uk,
+        is_active: true,
+        updated_at: nowIso()
+      });
+    }
+  }
+
+  const tableSettings = [
+    ["TUI-001", "OrderMaterialRequirements", "keyboard.enter", "save_current_row", "Enter зберігає поточний рядок після валідації."],
+    ["TUI-002", "OrderMaterialRequirements", "keyboard.ctrl_enter", "add_row", "Ctrl+Enter додає новий рядок."],
+    ["TUI-003", "OrderMaterialRequirements", "keyboard.esc", "cancel_edit", "Esc скасовує редагування клітинки."],
+    ["TUI-004", "StockLots", "validation.highlight_invalid_cells", "true", "Некоректні клітинки підсвічуються."],
+    ["TUI-005", "StockLots", "validation.focus_first_invalid", "true", "Після помилки фокус переходить на першу некоректну клітинку."]
+  ];
+
+  for (const [table_ui_setting_id, table_name, setting_key, setting_value, description] of tableSettings) {
+    if (!findOne("TableUiSettings", row => row.table_ui_setting_id === table_ui_setting_id)) {
+      appendRow("TableUiSettings", {
+        table_ui_setting_id,
+        table_name,
+        setting_key,
+        setting_value,
+        description,
+        updated_at: nowIso()
+      });
+    }
+  }
+
+  const procurementSettings = [
+    ["procurement_control_enabled", "true", "boolean", "Контроль залишків та автоплан закупівель увімкнено."],
+    ["procurement_planning_horizon_days", "7", "number", "Горизонт планування потреби матеріалів у днях."]
+  ];
+
+  for (const [key, value, type, description] of procurementSettings) {
+    if (!findOne("Settings", row => row.key === key)) {
+      appendRow("Settings", { key, value, type, description });
+    }
+  }
+}
+
+function seedBotManagement() {
+  if (!findOne("BotFlowSchemas", row => row.flow_schema_id === "FLOW-CAKES-DEFAULT")) {
+    appendRow("BotFlowSchemas", {
+      flow_schema_id: "FLOW-CAKES-DEFAULT",
+      name: "Оформлення замовлення кондитерської",
+      business_type: "bakery",
+      description: "Приклад сценарію: категорія, смак, вага, дата, доставка, оплата, алергени, додатки, підтвердження.",
+      is_default: true,
+      is_active: true,
+      created_at: nowIso(),
+      updated_at: nowIso()
+    });
+  }
+
+  const settings = [
+    ["BOT-SET-001", "language", "uk", "string", "Основна мова бота."],
+    ["BOT-SET-002", "manager_confirmation_before_reservation", "true", "boolean", "Чи потрібне підтвердження менеджера перед резервуванням."],
+    ["BOT-SET-003", "max_clarification_count", "10", "number", "Максимальна кількість уточнень перед handoff."],
+    ["BOT-SET-004", "out_of_hours_enabled", "true", "boolean", "Чи показувати окреме повідомлення поза робочим часом."]
+  ];
+  for (const [setting_id, key, value, type, description] of settings) {
+    if (!findOne("BotSettings", row => row.key === key)) {
+      appendRow("BotSettings", { setting_id, key, value, type, description, updated_at: nowIso() });
+    }
+  }
+
+  const templates = [
+    ["BT-001", "new_client_greeting", "Вітаю! Що бажаєте замовити?", "uk", "telegram"],
+    ["BT-002", "order_created", "Ваше замовлення №{order_id} прийнято. Ми повідомимо, коли воно буде готове.", "uk", "telegram"],
+    ["BT-003", "missing_fields", "Потрібно уточнити дані: {fields}.", "uk", "telegram"],
+    ["BT-004", "system_error", "Сталася технічна помилка. Звіт уже передано розробнику. Спробуйте ще раз або зверніться до менеджера.", "uk", "telegram"],
+    ["BT-005", "order_confirmation", "Перевірте замовлення:\n{summary}\nПідтвердити замовлення?", "uk", "telegram"],
+    ["BT-006", "allergen_question", "Чи є алергії або продукти, яких варто уникати? Наприклад горіхи, мед, лактоза, глютен.", "uk", "telegram"],
+    ["BT-007", "promo_offer", "Зараз активні акції: {promotions}. Бажаєте додати до замовлення?", "uk", "telegram"],
+    ["BT-008", "photo_offer", "Можу надіслати фото прикладів. Оберіть варіант або напишіть, що саме показати.", "uk", "telegram"]
+  ];
+  for (const [template_id, template_key, template_text, language, channel] of templates) {
+    if (!findOne("BotTemplates", row => row.template_key === template_key)) {
+      appendRow("BotTemplates", { template_id, template_key, template_text, language, channel, is_active: true, updated_at: nowIso() });
+    }
+  }
+
+  const steps = [
+    ["BSTEP-001", "category", "Категорія", "Оберіть категорію замовлення.", 10, true, "option", "", "", ""],
+    ["BSTEP-002", "taste", "Смак", "Оберіть смак.", 20, true, "option", "category", "custom_cake", ""],
+    ["BSTEP-003", "photo_examples", "Фото прикладів", "Бажаєте переглянути фото прикладів?", 25, false, "option", "category", "custom_cake", "BMEDIA-001"],
+    ["BSTEP-004", "weight", "Вага", "Оберіть вагу.", 30, true, "option", "category", "custom_cake", ""],
+    ["BSTEP-005", "addons", "Додатки", "Оберіть додатки до основного замовлення.", 40, false, "multi_option", "category", "custom_cake", ""],
+    ["BSTEP-006", "allergens", "Алергії", "Чи є алергії або продукти, яких варто уникати?", 50, true, "text", "", "", ""],
+    ["BSTEP-007", "desired_date", "Дата", "На яку дату потрібне замовлення? Мінімальний термін виготовлення - 3 дні.", 60, true, "date", "", "", ""],
+    ["BSTEP-008", "delivery", "Отримання", "Оберіть спосіб отримання.", 70, true, "option", "", "", ""],
+    ["BSTEP-009", "payment", "Оплата", "Оберіть спосіб оплати.", 80, true, "option", "", "", ""],
+    ["BSTEP-010", "contact", "Контакт", "Залиште номер телефону або інший контакт.", 90, true, "text", "", "", ""],
+    ["BSTEP-011", "confirmation", "Підтвердження", "Перевірте замовлення і підтвердьте.", 100, true, "confirmation", "", "", ""]
+  ];
+  for (const [step_id, step_key, title, prompt_text, sort_order, is_required, validation_type, depends_on_step_key, depends_on_value, media_asset_id] of steps) {
+    if (!findOne("BotOrderFlowSteps", row => row.step_key === step_key)) {
+      appendRow("BotOrderFlowSteps", {
+        step_id,
+        flow_schema_id: "FLOW-CAKES-DEFAULT",
+        step_key,
+        title,
+        prompt_text,
+        sort_order,
+        is_required,
+        validation_type,
+        depends_on_step_key,
+        depends_on_value,
+        media_asset_id,
+        handoff_on_fail: false,
+        is_active: true,
+        updated_at: nowIso()
+      });
+    }
+  }
+
+  const mediaAssets = [
+    ["BMEDIA-001", "Приклади тортів", "photo", "", "Фото прикладів тортів для вибору стилю.", "bot_flow_step", "photo_examples"],
+    ["BMEDIA-002", "Медовик", "photo", "", "Приклад торта Медовик.", "product_option", "taste_honey"],
+    ["BMEDIA-003", "Шоколадний", "photo", "", "Приклад шоколадного торта.", "product_option", "taste_chocolate"]
+  ];
+  for (const [media_asset_id, name, asset_type, url_or_file_id, caption, linked_entity_type, linked_entity_id] of mediaAssets) {
+    if (!findOne("BotMediaAssets", row => row.media_asset_id === media_asset_id)) {
+      appendRow("BotMediaAssets", { media_asset_id, name, asset_type, url_or_file_id, caption, linked_entity_type, linked_entity_id, is_active: true, updated_at: nowIso() });
+    }
+  }
+
+  const stepOptions = [
+    ["BOPT-001", "category", "Замовити торт", "custom_cake", 10, 0, false, false, ""],
+    ["BOPT-002", "category", "Готовий торт", "ready_cake", 20, 0, false, false, ""],
+    ["BOPT-003", "category", "Інше замовлення", "other_order", 30, 0, false, false, ""],
+    ["BOPT-004", "taste", "Медовик", "taste_honey", 10, 0, false, false, "BMEDIA-002"],
+    ["BOPT-005", "taste", "Шоколадний", "taste_chocolate", 20, 0, false, false, "BMEDIA-003"],
+    ["BOPT-006", "taste", "Наполеон", "taste_napoleon", 30, 0, false, false, ""],
+    ["BOPT-007", "taste", "Інше", "taste_other", 40, 0, false, false, ""],
+    ["BOPT-008", "weight", "1.5 кг", "1.5_kg", 10, 0, false, false, ""],
+    ["BOPT-009", "weight", "2 кг", "2_kg", 20, 0, false, false, ""],
+    ["BOPT-010", "weight", "3 кг", "3_kg", 30, 0, false, false, ""],
+    ["BOPT-011", "delivery", "Самовивіз", "pickup", 10, 0, false, false, ""],
+    ["BOPT-012", "delivery", "Кур'єр", "courier", 20, 0, false, false, ""],
+    ["BOPT-013", "delivery", "Нова Пошта", "nova_poshta", 30, 0, false, false, ""],
+    ["BOPT-014", "payment", "Передоплата", "prepayment", 10, 0, false, false, ""],
+    ["BOPT-015", "payment", "Повна оплата", "full_payment", 20, 0, false, false, ""],
+    ["BOPT-016", "payment", "Готівка при отриманні", "cash_on_delivery", 30, 0, false, false, ""],
+    ["BOPT-017", "addons", "Напис на торті", "addon_inscription", 10, 150, false, true, ""],
+    ["BOPT-018", "addons", "Ягоди", "addon_berries", 20, 250, false, true, ""],
+    ["BOPT-019", "addons", "Свічки", "addon_candles", 30, 80, false, true, ""],
+    ["BOPT-020", "photo_examples", "Так, покажіть фото", "show_photos", 10, 0, false, false, "BMEDIA-001"],
+    ["BOPT-021", "photo_examples", "Без фото", "skip_photos", 20, 0, false, false, ""]
+  ];
+  for (const [option_id, step_key, label, payload, sort_order, price_delta, is_promo, is_addon, media_asset_id] of stepOptions) {
+    if (!findOne("BotStepOptions", row => row.option_id === option_id)) {
+      appendRow("BotStepOptions", { option_id, flow_schema_id: "FLOW-CAKES-DEFAULT", step_key, label, payload, sort_order, price_delta, is_promo, is_addon, media_asset_id, is_active: true, updated_at: nowIso() });
+    }
+  }
+
+  const promotions = [
+    ["PROMO-001", "Свічки у подарунок", "При замовленні торта від 2 кг можна запропонувати свічки.", "category", "custom_cake", "gift", 0],
+    ["PROMO-002", "Знижка на ягоди", "Додаток Ягоди зі знижкою для активної акції.", "addon", "addon_berries", "percent", 10]
+  ];
+  for (const [promotion_id, name, description, target_type, target_id, discount_type, discount_value] of promotions) {
+    if (!findOne("Promotions", row => row.promotion_id === promotion_id)) {
+      appendRow("Promotions", { promotion_id, name, description, target_type, target_id, discount_type, discount_value, starts_at: "", ends_at: "", is_active: true, updated_at: nowIso() });
+    }
+  }
+
+  const replies = [
+    ["BQR-001", "Асортимент", "client_products", 10],
+    ["BQR-002", "Зробити замовлення", "client_order", 20],
+    ["BQR-003", "Зв'язатися з менеджером", "client_handoff", 30],
+    ["BQR-004", "Акції", "client_discounts", 40]
+  ];
+  for (const [reply_id, label, payload, sort_order] of replies) {
+    if (!findOne("BotQuickReplies", row => row.reply_id === reply_id)) {
+      appendRow("BotQuickReplies", { reply_id, label, payload, sort_order, is_active: true, updated_at: nowIso() });
+    }
+  }
+
+  const rules = [
+    ["BHR-001", "Термінове замовлення", "keyword", "терміново|срочно|urgent", "WARNING", "Клієнт просить термінове замовлення."],
+    ["BHR-002", "Невідомий продукт", "system", "unknown_product", "WARNING", "Бот не знайшов продукт у каталозі."],
+    ["BHR-003", "Нестача матеріалів", "system", "missing_stock", "CRITICAL", "Для замовлення не вистачає матеріалів."],
+    ["BHR-004", "Клієнт просить менеджера", "keyword", "менеджер|передзвоніть|зв'яжіться", "INFO", "Клієнт просить зв'язок з менеджером."]
+  ];
+  for (const [rule_id, name, trigger_type, trigger_value, severity, manager_message] of rules) {
+    if (!findOne("BotHandoffRules", row => row.rule_id === rule_id)) {
+      appendRow("BotHandoffRules", { rule_id, name, trigger_type, trigger_value, severity, manager_message, is_active: true, updated_at: nowIso() });
+    }
+  }
+}
+
 function seedCakesDemo() {
   const demo = JSON.parse(fs.readFileSync("./templates/cakes/demo_data.json", "utf-8"));
+  const warehouse = ensureDefaultWarehouse();
 
   for (const [key, value] of Object.entries(demo.settings)) {
     if (!findOne("Settings", r => r.key === key)) {
@@ -79,18 +297,44 @@ function seedCakesDemo() {
       component = appendRow("Components", {
         component_id: id("COMP"),
         name: c.name,
+        normalized_name: normalizeMaterialName(c.name),
         unit: c.unit,
         unit_cost: c.unit_cost,
+        min_qty: c.min_qty,
+        category_id: c.category_id || "",
+        description: c.description || "",
+        default_supplier_id: "",
+        allow_standalone_sale: false,
+        barcode: "",
+        qr_code: "",
         is_active: true
       });
       appendRow("Stock", {
         stock_id: id("STOCK"),
         component_id: component.component_id,
+        warehouse_id: warehouse.warehouse_id,
         current_qty: c.stock,
         reserved_qty: 0,
+        available_qty: c.stock,
         unit: c.unit,
         min_qty: c.min_qty,
-        unit_cost: c.unit_cost
+        unit_cost: c.unit_cost,
+        weighted_avg_unit_cost: c.unit_cost,
+        availability_status: Number(c.stock) <= Number(c.min_qty) ? "Низький залишок" : "Достатньо",
+        allow_standalone_sale: false,
+        linked_order_ids: "",
+        updated_at: nowIso()
+      });
+    }
+    if (!findOne("StockLots", r => r.component_id === component.component_id)) {
+      receiveStockLot({
+        component_id: component.component_id,
+        warehouse_id: warehouse.warehouse_id,
+        qty: c.stock,
+        unit: c.unit,
+        unit_cost: c.unit_cost,
+        reason: "demo initial lot",
+        created_by: "workspace_seed"
       });
     }
     componentMap[c.name] = component.component_id;
@@ -105,7 +349,7 @@ function seedCakesDemo() {
         product_id,
         component_id,
         qty_per_unit: b.qty_per_unit,
-        unit: "kg"
+        unit: findOne("Components", r => r.component_id === component_id)?.unit || "kg"
       });
     }
   }

@@ -18,7 +18,12 @@ export async function getDashboardSummary() {
 
   const activeOrders = orders.filter(order => !["Cancelled", "Delivered", "PickedUp"].includes(order.status));
   const revenue = orders.reduce((sum, order) => sum + asNumber(order.final_price), 0);
-  const lowStock = stock.filter(row => asNumber(row.current_qty) - asNumber(row.reserved_qty) <= asNumber(row.min_qty));
+  const lowStock = stock.filter(row => {
+    const available = row.available_qty !== undefined && row.available_qty !== ""
+      ? asNumber(row.available_qty)
+      : asNumber(row.current_qty) - asNumber(row.reserved_qty);
+    return available <= asNumber(row.min_qty);
+  });
   const openTasks = tasks.filter(task => !["Done", "Closed", "Cancelled"].includes(task.status));
   const openPurchases = purchases.filter(request => !["Received", "Cancelled", "Closed"].includes(request.status));
   const componentById = new Map(components.map(component => [component.component_id, component]));

@@ -1,13 +1,15 @@
 :root {
   color-scheme: light;
-  --ink: #17211f;
-  --muted: #62706b;
-  --line: #d9e2dc;
+  --ink: #18201d;
+  --muted: #68736e;
+  --line: #dfe6e2;
   --panel: #ffffff;
-  --soft: #f5f8f4;
-  --accent: #176b5b;
-  --accent-2: #c2552c;
+  --soft: #f7f9f7;
+  --accent: #1f6a59;
+  --accent-2: #b85f36;
   --danger: #a63636;
+  --focus: #2f8f77;
+  --focus-soft: #e7f4ef;
 }
 
 * {
@@ -17,7 +19,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #eef4ef 0%, #f8faf5 45%, #f0f5f7 100%);
+  background: #f4f7f5;
   color: var(--ink);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -45,10 +47,10 @@ select {
 .brand-panel,
 .panel,
 .auth-card {
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: 0 18px 48px rgba(28, 50, 43, 0.08);
+  box-shadow: 0 10px 28px rgba(28, 50, 43, 0.06);
 }
 
 .brand-panel {
@@ -228,6 +230,46 @@ label.is-required {
   color: var(--ink);
 }
 
+.ready-field,
+.planned-field {
+  position: relative;
+}
+
+.ready-field > span::after,
+.planned-field > span::after {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ready-field > span::after {
+  content: "готово";
+  background: #e5f3ec;
+  color: #207056;
+}
+
+.planned-field {
+  opacity: 0.62;
+}
+
+.planned-field > span::after {
+  content: "пізніше";
+  background: #f0f1f0;
+  color: #6c746f;
+}
+
+.planned-field input,
+.planned-field select {
+  background: #f4f5f4;
+  cursor: not-allowed;
+}
+
 label.is-required input {
   border-color: #d98a3f;
   box-shadow: 0 0 0 3px rgba(217, 138, 63, 0.14);
@@ -256,6 +298,47 @@ select {
   background: #fff;
   color: var(--ink);
   padding: 0 11px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+input:hover,
+select:hover {
+  border-color: #b8c8c0;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--focus);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(47, 143, 119, 0.16);
+}
+
+input:not(:placeholder-shown),
+select:valid {
+  border-color: #c5d5ce;
+  background: #fcfefd;
+}
+
+label:focus-within {
+  color: var(--ink);
+}
+
+label:focus-within span {
+  color: var(--accent);
+}
+
+.active-field {
+  background: var(--focus-soft);
+  border-color: rgba(47, 143, 119, 0.38);
+  box-shadow: inset 3px 0 0 var(--focus);
+}
+
+.active-field input,
+.active-field select,
+.active-field textarea {
+  background: #fff;
 }
 
 .message {
@@ -263,6 +346,7 @@ select {
   margin: 12px 0 0;
   color: var(--danger);
   font-size: 13px;
+  white-space: pre-line;
 }
 
 .message.ok {
@@ -275,7 +359,7 @@ select {
 
 .app-view {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .topbar,
@@ -365,6 +449,416 @@ select {
   gap: 18px;
 }
 
+.module-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 6px;
+  box-shadow: 0 8px 20px rgba(28, 50, 43, 0.05);
+}
+
+.module-tab {
+  flex: 0 0 auto;
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0 13px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.module-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.module-section {
+  animation: sectionIn 140ms ease-out;
+}
+
+@keyframes sectionIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inventory-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.inventory-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.procurement-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.procurement-head,
+.procurement-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.procurement-controls label {
+  min-width: 110px;
+}
+
+.switch-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  font-weight: 800;
+}
+
+.procurement-table {
+  max-height: 260px;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.report-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.report-controls,
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  gap: 12px;
+  align-items: end;
+}
+
+.report-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-table {
+  max-height: 280px;
+}
+
+.operations-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.ai-assistant-workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-command-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.ai-result {
+  min-height: 120px;
+  white-space: pre-line;
+  padding: 14px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.inventory-form {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+  padding: 14px;
+}
+
+.production-panel {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.production-panel .inventory-form {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+
+.production-panel .inventory-form h3,
+.production-panel .inventory-form .form-actions {
+  grid-column: 1 / -1;
+}
+
+.form-actions,
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.checkbox-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.table-toolbar {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table-toolbar span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--soft);
+}
+
+.number-stepper {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  gap: 6px;
+}
+
+.number-stepper button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.data-table {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  max-height: 420px;
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  font-size: 13px;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 9px 10px;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f0f5f2;
+  color: var(--ink);
+}
+
+.empty-state {
+  padding: 14px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.data-table td:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: #f1faf4;
+}
+
+.status-low,
+.status-empty {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.status-ok {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.procurement-absent td {
+  background: #fff1f0;
+  color: #7a2323;
+}
+
+.procurement-missing td {
+  background: #fff7e8;
+}
+
+.procurement-reserve td {
+  background: #edf6ff;
+}
+
+.procurement-low td {
+  background: #f4fbf0;
+}
+
+.missing-field {
+  border-color: #d98a3f !important;
+  box-shadow: 0 0 0 3px rgba(217, 138, 63, 0.14) !important;
+}
+
+.invalid-field {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(166, 54, 54, 0.12) !important;
+}
+
+.suggestions {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.suggestions button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(24, 32, 29, 0.36);
+  padding: 18px;
+}
+
+.help-dialog {
+  width: min(920px, 100%);
+  max-height: min(760px, calc(100vh - 36px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(24, 32, 29, 0.22);
+  padding: 18px;
+}
+
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.help-search {
+  max-width: 520px;
+}
+
+.help-content {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+  padding: 12px;
+}
+
+.help-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.help-section h3 {
+  margin-bottom: 8px;
+}
+
+.help-section ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 6px 10px;
+  color: var(--muted);
+}
+
+.shortcut-grid kbd {
+  justify-self: start;
+  border: 1px solid var(--line);
+  border-bottom-color: #b8c8c0;
+  border-radius: 6px;
+  background: #fff;
+  padding: 4px 7px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .tables {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -380,6 +874,10 @@ select {
   .auth-view,
   .grid,
   .tables,
+  .inventory-layout,
+  .module-grid,
+  .report-grid,
+  .report-controls,
   .field-grid {
     grid-template-columns: 1fr;
   }
@@ -393,5 +891,17 @@ select {
   .panel-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .production-panel .inventory-form {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-command-box {
+    grid-template-columns: 1fr;
+  }
+
+  .shortcut-grid {
+    grid-template-columns: 1fr;
   }
 }
