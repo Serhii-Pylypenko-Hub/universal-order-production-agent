@@ -3,6 +3,7 @@
 ## Unreleased
 
 Added:
+- GitHub repository description metadata, README About text, and package description for clearer repository presentation.
 - Calendar tab now has real working actions: reschedule/order planning, work-time blocking, recalculated free hours, and status columns.
 - Workspace tabs now show a short scenario strip so the main action is first and reference creation stays secondary until needed.
 - User docs and demo test instructions now describe the calendar workflow, blocking hours, and left-to-right UX rule for future modules.

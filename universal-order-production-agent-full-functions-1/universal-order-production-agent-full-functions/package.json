@@ -2,7 +2,7 @@
   "name": "universal-order-production-agent",
   "version": "0.6.0",
   "type": "module",
-  "description": "Universal AI Order & Production Assistant — MVP with Telegram bot, Google Sheets, customizations, and full order lifecycle",
+  "description": "Local-first MVP/demo ERP for orders, inventory, procurement, production, Telegram bot intake, and AI-assisted business actions",
   "engines": { "node": ">=18.0.0" },
   "scripts": {
     "setup:empty": "node app/js/setup/initWorkspace.js empty",
