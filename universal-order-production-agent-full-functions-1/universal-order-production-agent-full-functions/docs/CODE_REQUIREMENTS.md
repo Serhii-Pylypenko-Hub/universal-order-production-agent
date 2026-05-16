@@ -97,9 +97,41 @@ These requirements are mandatory for all contributors and AI coding agents.
 - Validation must distinguish missing required fields from invalid filled fields.
 - Missing required fields should use `category: missing_required`; invalid values should use `category: invalid_value`.
 - The web UI must visually distinguish missing required fields from invalid filled fields.
+- User input fields must show field-level guidance only after user interaction, blur, Enter, action button, or server validation response.
+- Filled valid fields should show a positive confirmation after interaction when the format is accepted.
+- Validation must not show a wall of hints on first page load.
+- Validation must react after the user types/changes an already touched field and after Enter/action buttons.
+- A missing required value must say what field is empty and why it is required.
+- An invalid filled value must say what format/range is expected and keep the typed value visible for correction.
+- Secret fields must explain that the visible value is cleared after save while the saved status remains visible.
+- Future forms must use the shared validation/hint pattern so users always understand what to fix before retrying.
+- Successful form submission must clear old field errors/hints so the user does not see stale validation state.
+- Server-side validation errors must map back to the exact web field whenever the field exists in the current form.
 - UI table parts must support spreadsheet-like keyboard work: arrows, Tab, Enter save, Ctrl+Enter add row, Esc cancel.
 - Invalid table cells must be highlighted and focus must move to the first invalid cell.
 - Server-side validation must exist even when browser validation exists.
 - System errors must show a safe Ukrainian message and must not expose stack traces to users.
 - System errors must create `UserFacingErrors` and `DeveloperAlerts`.
 - When GitHub integration is configured, critical developer alerts must create a GitHub issue.
+
+- Existing-reference fields must use search-first behavior. Pressing Enter with no match must show a Ukrainian modal explaining that the position does not exist and offering either return to search or create a new reference record. This applies to product/material selection in tech cards, purchases, receipts, and production overrides.
+- Complex tabs must follow left-to-right progressive disclosure: show the primary action first, keep new-reference creation forms hidden until the user explicitly starts creation or confirms creation from a missing-reference modal.
+
+## Future UX / Error-Handling Scenarios
+
+Every new form, table part, bot setting, calendar action, AI action, and integration screen must be designed with these scenarios before implementation is considered complete:
+
+- First load: the screen must not show a wall of warnings. Empty hints are allowed only as quiet labels/placeholders; field errors appear only after interaction or action attempt.
+- User touches a required field and leaves it empty: show an inline Ukrainian message near that field, mark it as missing required, and explain why it is needed.
+- User enters a value in the wrong format: keep the typed value visible, mark it as invalid, and explain the expected format, range, or example.
+- User presses Enter: run the same validation and save/search behavior as the main action button for that block.
+- User presses the main action button with multiple problems: show all missing/invalid fields in the summary and focus the first problem field.
+- User fixes a field after an error: update the field state after typing/blur and show positive confirmation only for touched fields.
+- User saves successfully: clear old errors, show a short success message, refresh affected tables/cards, and keep the user in the same workflow.
+- User selects a product/material/reference: search existing records first; if no match exists, show a modal with `Повернутись до пошуку` and `Створити`.
+- User creates a new reference from that modal: return to the original workflow, auto-select the created record, and focus the next required field.
+- System/API error: do not crash the page. Show a safe Ukrainian message that the report was sent to the developer, create `UserFacingErrors` and `DeveloperAlerts`, and create a GitHub issue when GitHub integration is configured.
+- Secret/token fields: after save, the visible input may clear, but the saved status, value length, and config path must stay visible so the user understands that data was stored.
+- Planned/inactive features: clearly mark the block as planned/inactive and prevent saving incomplete data.
+
+For every future PR, include at least one manual or automated test note covering: empty required field, invalid filled field, successful save, and system/API failure path when relevant.

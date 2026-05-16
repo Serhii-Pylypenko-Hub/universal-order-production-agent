@@ -33,7 +33,7 @@
             <button class="tab" id="loginTab" type="button" data-i18n="loginTab">Вхід</button>
           </div>
 
-          <form id="registerForm" class="form">
+          <form id="registerForm" class="form" novalidate>
             <label><span data-i18n="nameLabel">Ім'я</span>
               <input name="name" autocomplete="name" data-label="Ім'я" data-instruction="Не заповнено поле Ім'я. Вкажіть ім'я мінімум 2 символи." required minlength="2">
             </label>
@@ -46,7 +46,7 @@
             <button class="primary" type="submit" data-i18n="createAccount">Створити акаунт</button>
           </form>
 
-          <form id="loginForm" class="form hidden">
+          <form id="loginForm" class="form hidden" novalidate>
             <label><span data-i18n="emailLabel">Пошта</span>
               <input name="email" type="email" autocomplete="email" data-label="Пошта" data-instruction="Не заповнено поле Пошта. Вкажіть email для входу." required>
             </label>
@@ -54,6 +54,7 @@
               <input name="password" type="password" autocomplete="current-password" data-label="Пароль" data-instruction="Не заповнено поле Пароль. Вкажіть пароль для входу." required>
             </label>
             <button class="primary" type="submit" data-i18n="signIn">Увійти</button>
+            <button class="secondary" id="resetPasswordButton" type="button">Задати цей пароль для локального демо</button>
           </form>
           <p class="message" id="authMessage"></p>
         </div>
@@ -87,7 +88,7 @@
         </nav>
 
         <section class="grid module-section hidden" data-module="setup">
-          <form class="panel connections" id="connectionsForm">
+          <form class="panel connections" id="connectionsForm" novalidate>
             <div class="panel-head">
               <div>
                 <p class="eyebrow" data-i18n="stepOne">Крок 1</p>
@@ -144,6 +145,7 @@
               </label>
             </div>
             <p class="message" id="connectionsMessage"></p>
+            <div class="connection-status" id="connectionStatus"></div>
           </form>
 
           <aside class="panel">
@@ -173,6 +175,30 @@
             </div>
           </div>
           <div class="metrics" id="metrics"></div>
+          <div class="order-calendar-panel">
+            <div class="section-head-inline">
+              <div>
+                <p class="eyebrow">План</p>
+                <h3>Календар поточних замовлень</h3>
+              </div>
+              <span>статуси, готовність, доставка</span>
+            </div>
+            <div id="orderCalendar" class="order-calendar"></div>
+          </div>
+          <div class="procurement-preview-panel">
+            <div class="section-head-inline">
+              <div>
+                <p class="eyebrow">Закупівлі</p>
+                <h3>Що закупити</h3>
+              </div>
+              <div class="form-actions compact-actions">
+                <button class="primary" id="createProcurementFromDashboardButton" type="button">Створити заявку</button>
+                <button class="secondary" id="openProcurementButton" type="button">Повний план</button>
+              </div>
+            </div>
+            <p class="message" id="dashboardProcurementMessage"></p>
+            <div id="procurementPreview" class="procurement-preview"></div>
+          </div>
           <div class="tables">
             <div>
               <h3 data-i18n="recentOrders">Останні замовлення</h3>
@@ -245,13 +271,13 @@
               <label><span>Одиниця виміру</span>
                 <select name="unit" data-label="Одиниця виміру" data-instruction="Оберіть базову одиницю для матеріалу." required>
                   <option value="">Оберіть</option>
-                  <option value="kg">kg</option>
-                  <option value="g">g</option>
-                  <option value="l">l</option>
-                  <option value="ml">ml</option>
-                  <option value="pcs">pcs</option>
-                  <option value="pack">pack</option>
-                  <option value="box">box</option>
+                  <option value="kg">кг</option>
+                  <option value="g">г</option>
+                  <option value="l">л</option>
+                  <option value="ml">мл</option>
+                  <option value="pcs">шт</option>
+                  <option value="pack">уп.</option>
+                  <option value="box">кор.</option>
                 </select>
               </label>
               <label><span>Базова ціна</span>
@@ -282,13 +308,13 @@
               <label><span>Одиниця</span>
                 <select name="unit" data-label="Одиниця" data-instruction="Оберіть одиницю, сумісну з матеріалом." required>
                   <option value="">Оберіть</option>
-                  <option value="kg">kg</option>
-                  <option value="g">g</option>
-                  <option value="l">l</option>
-                  <option value="ml">ml</option>
-                  <option value="pcs">pcs</option>
-                  <option value="pack">pack</option>
-                  <option value="box">box</option>
+                  <option value="kg">кг</option>
+                  <option value="g">г</option>
+                  <option value="l">л</option>
+                  <option value="ml">мл</option>
+                  <option value="pcs">шт</option>
+                  <option value="pack">уп.</option>
+                  <option value="box">кор.</option>
                 </select>
               </label>
               <label><span>Ціна за одиницю</span>
@@ -342,13 +368,13 @@
               <label><span>Одиниця</span>
                 <select name="unit" data-label="Одиниця" data-instruction="Оберіть одиницю виміру." required>
                   <option value="">Оберіть</option>
-                  <option value="kg">kg</option>
-                  <option value="g">g</option>
-                  <option value="l">l</option>
-                  <option value="ml">ml</option>
-                  <option value="pcs">pcs</option>
-                  <option value="pack">pack</option>
-                  <option value="box">box</option>
+                  <option value="kg">кг</option>
+                  <option value="g">г</option>
+                  <option value="l">л</option>
+                  <option value="ml">мл</option>
+                  <option value="pcs">шт</option>
+                  <option value="pack">уп.</option>
+                  <option value="box">кор.</option>
                 </select>
               </label>
               <label><span>Причина</span>
@@ -391,13 +417,13 @@
           <div class="module-grid">
             <form class="inventory-form" id="productForm" novalidate>
               <h3>Новий продукт</h3>
-              <label><span>Назва</span><input name="name" data-label="Назва" data-instruction="Не заповнено поле Назва. Вкажіть назву продукту, наприклад Chocolate Cake." required></label>
+              <label><span>Назва</span><input name="name" data-label="Назва" data-instruction="Не заповнено поле Назва. Вкажіть назву продукту, наприклад Шоколадний торт." required></label>
               <label><span>Одиниця продажу</span>
-                <select name="unit" data-label="Одиниця продажу" data-instruction="Не обрано одиницю продажу. Оберіть kg, pcs або box." required>
+                <select name="unit" data-label="Одиниця продажу" data-instruction="Не обрано одиницю продажу. Оберіть кг, шт або кор." required>
                   <option value="">Оберіть</option>
-                  <option value="kg">kg</option>
-                  <option value="pcs">pcs</option>
-                  <option value="box">box</option>
+                  <option value="kg">кг</option>
+                  <option value="pcs">шт</option>
+                  <option value="box">кор.</option>
                 </select>
               </label>
               <label><span>Базова ціна</span><input name="base_price" type="number" min="0.01" step="0.01" data-label="Базова ціна" data-instruction="Некоректно заповнено базову ціну. Вкажіть число більше 0." required></label>
@@ -415,13 +441,13 @@
               <label><span>Одиниця</span>
                 <select name="unit" data-label="Одиниця" data-instruction="Не обрано одиницю матеріалу для техкарти." required>
                   <option value="">Оберіть</option>
-                  <option value="kg">kg</option>
-                  <option value="g">g</option>
-                  <option value="l">l</option>
-                  <option value="ml">ml</option>
-                  <option value="pcs">pcs</option>
-                  <option value="pack">pack</option>
-                  <option value="box">box</option>
+                  <option value="kg">кг</option>
+                  <option value="g">г</option>
+                  <option value="l">л</option>
+                  <option value="ml">мл</option>
+                  <option value="pcs">шт</option>
+                  <option value="pack">уп.</option>
+                  <option value="box">кор.</option>
                 </select>
               </label>
               <button class="primary" type="submit">Додати в техкарту</button>
@@ -648,6 +674,17 @@
           <input id="helpSearchInput" placeholder="Наприклад: склад, FIFO, гарячі клавіші, AI" autocomplete="off">
         </label>
         <div class="help-content" id="helpContent" tabindex="0"></div>
+      </div>
+    </section>
+    <section class="lookup-overlay hidden" id="lookupCreateOverlay" aria-hidden="true">
+      <div class="lookup-dialog" role="dialog" aria-modal="true" aria-labelledby="lookupCreateTitle">
+        <p class="eyebrow">Довідник</p>
+        <h2 id="lookupCreateTitle">Позицію не знайдено</h2>
+        <p id="lookupCreateText"></p>
+        <div class="lookup-actions">
+          <button class="primary" id="lookupCreateButton" type="button">Створити</button>
+          <button class="secondary" id="lookupCancelButton" type="button">Повернутись до пошуку</button>
+        </div>
       </div>
     </section>
     <script src="/app.js" type="module"></script>

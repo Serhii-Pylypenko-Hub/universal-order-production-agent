@@ -4,7 +4,7 @@ import { healthCheckWorkspace } from "../app/js/setup/healthCheck.js";
 import { createOrder, updateOrderStatus } from "../app/js/orders/orderService.js";
 import { getRows, appendRow } from "../app/js/data/rowRepository.js";
 import { getProductByName } from "../app/js/orders/productService.js";
-import { getProductOptions } from "../app/js/customizations/customizationService.js";
+import { calculateCustomizationTotals, getProductOptions } from "../app/js/customizations/customizationService.js";
 import { getClientPreferenceHistory } from "../app/js/clients/clientPreferenceService.js";
 import { calculateFinalPrice, createDiscountRule } from "../app/js/pricing/discountService.js";
 import { safeExecute } from "../app/js/errors/userErrorService.js";
@@ -15,6 +15,7 @@ import { completeOrderProduction, getProductionOrderDetails, startOrderProductio
 import { runAssistantCommand } from "../app/js/ai/assistantActionService.js";
 import { setAiMode, setBotAssistantMode } from "../app/js/ai/subscriptionService.js";
 import { getInventoryBalanceOnDate, getMonthlyInventoryDifferences } from "../app/js/reports/inventoryReportService.js";
+import { getDashboardSummary } from "../app/js/web/dashboardService.js";
 
 if (fs.existsSync("./data/local_workspace.json")) fs.unlinkSync("./data/local_workspace.json");
 
@@ -59,9 +60,13 @@ if (getRows("SubscriptionPlans").length < 2) throw new Error("AI subscription pl
 
 const health = await healthCheckWorkspace();
 if (!health.ready_for_orders) throw new Error("Workspace is not ready for orders");
-const chocolate = getProductByName("Chocolate Cake");
+const chocolate = getProductByName("Шоколадний торт");
 if (!chocolate) throw new Error("Demo product not seeded");
+if (!getProductByName("Chocolate Cake")) throw new Error("English product alias should resolve for old bot chats");
 if (getProductOptions(chocolate.product_id).length === 0) throw new Error("Product options were not seeded");
+if (calculateCustomizationTotals(chocolate.product_id, [{ name: "Add raspberry" }, { name: "Remove nuts" }]).resolved.filter(row => row.valid).length !== 2) {
+  throw new Error("English customization aliases should resolve for old bot chats");
+}
 if (getRows("StockLots").length === 0) throw new Error("Demo stock lots were not seeded");
 
 createDiscountRule({ name: "Every second order", type: "percent", value: 10, everyNOrder: 2 });
@@ -71,12 +76,12 @@ const firstOrder = createOrder({
   source: "test",
   client_name: "Test Client",
   client_contact: "+380111111111",
-  product_name: "Chocolate Cake",
+  product_name: "Шоколадний торт",
   quantity: 1,
   desired_date: new Date().toISOString(),
   preferences: "більше ягід",
   restrictions_or_allergies: "без горіхів",
-  customizations: [{ name: "Add raspberry" }, { name: "Remove nuts" }, { name: "Add inscription", custom_value: "Happy birthday" }],
+  customizations: [{ name: "Додати малину" }, { name: "Без горіхів" }, { name: "Додати напис", custom_value: "Happy birthday" }],
   urgent: false
 });
 if (!firstOrder || !firstOrder.order_id) throw new Error("First order was not created");
@@ -95,7 +100,7 @@ const duplicate = createOrder({
   source: "test",
   client_name: "Test Client",
   client_contact: "+380111111111",
-  product_name: "Chocolate Cake",
+  product_name: "Шоколадний торт",
   quantity: 1,
   urgent: false
 });
@@ -106,7 +111,7 @@ const secondOrder = createOrder({
   source: "test",
   client_name: "Test Client",
   client_contact: "+380111111111",
-  product_name: "Chocolate Cake",
+  product_name: "Шоколадний торт",
   quantity: 1,
   desired_date: new Date().toISOString(),
   urgent: false
@@ -119,7 +124,7 @@ const novaOrder = createOrder({
   source: "test",
   client_name: "Nova Client",
   client_contact: "+380501234567",
-  product_name: "Honey Cake",
+  product_name: "Медовик",
   quantity: 1,
   desired_date: new Date().toISOString(),
   delivery_method: "nova_poshta",
@@ -141,6 +146,16 @@ const completed = completeOrderProduction(firstOrder.order_id, "test");
 if (!completed.consumed) throw new Error("Production completion did not consume reservations");
 if (getRows("InventoryTransactions").filter(r => r.order_id === firstOrder.order_id && r.type === "OUT").length === 0) {
   throw new Error("Production completion did not create OUT transactions");
+}
+
+const dashboardSummary = await getDashboardSummary();
+if (!dashboardSummary.order_calendar?.length) throw new Error("Dashboard order calendar is empty");
+if (!dashboardSummary.order_calendar.some(row => row.order_id === secondOrder.order_id && row.status)) {
+  throw new Error("Dashboard order calendar does not expose active order statuses");
+}
+if (!dashboardSummary.procurement_preview?.length) throw new Error("Dashboard procurement preview is empty");
+if (!dashboardSummary.procurement_preview.every(row => Number(row.recommended_purchase_qty) > 0)) {
+  throw new Error("Dashboard procurement preview should only show recommended purchase rows");
 }
 
 if (getRows("ActivityLog").length === 0) throw new Error("ActivityLog is empty");
@@ -170,11 +185,11 @@ if (!getRows("Products").every(product => product.image_url)) {
 if (!getRows("BotMediaAssets").some(asset => asset.url_or_file_id?.includes("/assets/products/"))) {
   throw new Error("Demo bot media assets should include presentation image paths");
 }
-if (!inventory.procurement_plan.rows.find(row => row.material_name === "Berries" && row.severity === "absent")) {
-  throw new Error("Demo procurement plan should show absent Berries");
+if (!inventory.procurement_plan.rows.find(row => row.material_name === "Ягоди" && row.severity === "absent")) {
+  throw new Error("Demo procurement plan should show absent Ягоди");
 }
-if (!inventory.procurement_plan.rows.find(row => row.material_name === "Cupcake Base" && row.severity === "below_min")) {
-  throw new Error("Demo procurement plan should show Cupcake Base below minimum");
+if (!inventory.procurement_plan.rows.find(row => row.material_name === "Основа капкейка" && row.severity === "below_min")) {
+  throw new Error("Demo procurement plan should show Основа капкейка below minimum");
 }
 const procurementMaterial = createInventoryMaterial({
   name: "Procurement Test Material",
@@ -198,7 +213,7 @@ const productResult = createCatalogProduct({
   margin_percent: 30
 });
 if (!productResult.product?.product_id) throw new Error("Catalog product was not created");
-const flour = getRows("Components").find(c => c.name === "Flour");
+const flour = getRows("Components").find(c => c.name === "Борошно");
 addTechCardItem({
   product_id: productResult.product.product_id,
   component_id: flour.component_id,

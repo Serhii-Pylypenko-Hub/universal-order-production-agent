@@ -1,7 +1,40 @@
 import { findOne, findRows } from "../data/rowRepository.js";
 
+const PRODUCT_ALIASES = new Map([
+  ["chocolate cake", "Шоколадний торт"],
+  ["chocolate", "Шоколадний торт"],
+  ["шоколадний", "Шоколадний торт"],
+  ["шоколадний торт", "Шоколадний торт"],
+  ["honey cake", "Медовик"],
+  ["honey", "Медовик"],
+  ["медовий торт", "Медовик"],
+  ["медовик", "Медовик"],
+  ["berry cheesecake", "Ягідний чизкейк"],
+  ["cheesecake", "Ягідний чизкейк"],
+  ["ягідний чізкейк", "Ягідний чизкейк"],
+  ["ягідний чизкейк", "Ягідний чизкейк"],
+  ["чізкейк", "Ягідний чизкейк"],
+  ["чизкейк", "Ягідний чизкейк"],
+  ["napoleon cake", "Наполеон"],
+  ["napoleon", "Наполеон"],
+  ["наполеон", "Наполеон"],
+  ["carrot cake", "Морквяний торт"],
+  ["морквяний", "Морквяний торт"],
+  ["морквяний торт", "Морквяний торт"],
+  ["cupcake box", "Набір капкейків"],
+  ["cupcakes", "Набір капкейків"],
+  ["капкейки", "Набір капкейків"],
+  ["набір капкейків", "Набір капкейків"]
+]);
+
+export function normalizeProductName(productName) {
+  const raw = String(productName || "").trim();
+  return PRODUCT_ALIASES.get(raw.toLowerCase()) || raw;
+}
+
 export function getProductByName(productName) {
-  return findOne("Products", r => r.name.toLowerCase() === productName.toLowerCase() && String(r.is_active) !== "false");
+  const normalized = normalizeProductName(productName);
+  return findOne("Products", r => r.name.toLowerCase() === normalized.toLowerCase() && String(r.is_active) !== "false");
 }
 
 export function getProductBOM(productId) {

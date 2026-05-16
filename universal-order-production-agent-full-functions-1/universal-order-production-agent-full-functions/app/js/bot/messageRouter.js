@@ -7,6 +7,7 @@ import { saveFailedOperation } from "../utils/retryService.js";
 import { createUserFacingError } from "../errors/userErrorService.js";
 import { getRows } from "../data/rowRepository.js";
 import { getActiveDiscountRules } from "../pricing/discountService.js";
+import { unitLabel } from "../utils/unitLabels.js";
 
 const MANAGER_CHAT_ID = () => process.env.MANAGER_CHAT_ID;
 const MAX_CLIENT_ASSISTANT_REPLIES = 10;
@@ -276,8 +277,8 @@ function buildOrderExamples() {
     "",
     "Хочу шоколадний торт 2 кг на завтра, без горіхів",
     "Потрібен медовик 1.5 кг на п'ятницю",
-    "Хочу Napoleon Cake 2 кг на суботу з написом Happy Birthday",
-    "Berry Cheesecake 1 кг на 20 число, більше ягід"
+    "Хочу Наполеон 2 кг на суботу з написом Happy Birthday",
+    "Ягідний чизкейк 1 кг на 20 число, більше ягід"
   ].join("\n");
 }
 
@@ -289,14 +290,14 @@ function formatClientProducts() {
   return [
     "<b>Demo-продукти:</b>",
     "",
-    ...products.map(product => `• ${product.name}: ${product.base_price || "?"} UAH / ${product.unit || "unit"}`),
+    ...products.map(product => `• ${product.name}: ${product.base_price || "?"} UAH / ${unitLabel(product.unit) || "од."}`),
     "",
-    "<b>Доступні зміни для Chocolate Cake:</b>",
-    "• Add raspberry",
-    "• Extra chocolate",
-    "• Add nuts",
-    "• Remove nuts",
-    "• Add inscription"
+    "<b>Доступні зміни для Шоколадний торт:</b>",
+    "• Додати малину",
+    "• Більше шоколаду",
+    "• Додати горіхи",
+    "• Без горіхів",
+    "• Додати напис"
   ].join("\n");
 }
 
@@ -313,7 +314,7 @@ function formatClientStock() {
       const component = components.get(row.component_id);
       const name = component?.name || row.component_id;
       const available = Number(row.current_qty || 0) - Number(row.reserved_qty || 0);
-      return `• ${name}: ${available} ${row.unit || component?.unit || ""}`;
+      return `• ${name}: ${available} ${unitLabel(row.unit || component?.unit)}`;
     })
   ].join("\n");
 }
@@ -339,7 +340,7 @@ function buildManagerNewOrderAlert(order, message) {
   const itemLines = orderItems.map(item => {
     const product = products.get(item.product_id);
     const customization = item.customization_summary ? `; ${item.customization_summary}` : "";
-    return `• ${product?.name || item.product_id}: ${item.quantity} ${item.unit || product?.unit || ""}${customization}`;
+    return `• ${product?.name || item.product_id}: ${item.quantity} ${unitLabel(item.unit || product?.unit)}${customization}`;
   });
 
   return [

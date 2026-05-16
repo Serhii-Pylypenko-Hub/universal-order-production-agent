@@ -2,7 +2,7 @@ import fs from "fs";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createSession, createUser, destroySession, getSessionUser, verifyLogin } from "./authStore.js";
+import { createSession, createUser, destroySession, getSessionUser, resetLocalPassword, verifyLogin } from "./authStore.js";
 import { buildEnvPatchFromOnboarding, getConnectionConfig, loadEnvFile, saveEnvPatch, validateConnectionPatchDetailed } from "./envConfig.js";
 import { getDashboardSummary } from "./dashboardService.js";
 import { createInventoryMaterial, getInventoryWorkspace, getMaterialSuggestions, getProcurementPlan, receiveInventoryLot, saveProcurementSettings } from "./inventoryService.js";
@@ -12,6 +12,7 @@ import { getBotManagementWorkspace, saveBotAccount, saveBotAssistantSettings, sa
 import { disableLocalBotAutostart, enableLocalBotAutostart, getLocalBotStatus, startLocalTelegramBot, stopLocalTelegramBot } from "./localBotProcessService.js";
 import { logVoiceCommand, runAssistantCommand } from "../ai/assistantActionService.js";
 import { getActiveAiMode, isFullAssistantActive, setAiMode, setBotAssistantMode } from "../ai/subscriptionService.js";
+import { blockCalendarTime, rescheduleOrderProduction } from "../calendar/calendarService.js";
 import { getInventoryReports } from "../reports/inventoryReportService.js";
 import {
   addManualOrderMaterial,
@@ -30,6 +31,7 @@ import { ValidationError, formatValidationInstructions } from "../errors/validat
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_ROOT = path.resolve(__dirname, "../../web");
 const JSON_LIMIT_BYTES = 1024 * 1024;
+const APP_ID = "universal-order-production-agent";
 
 function parseCookies(header = "") {
   const cookies = {};
@@ -63,7 +65,23 @@ function sendStatic(res, requestPath) {
     ".js": "application/javascript; charset=utf-8",
     ".svg": "image/svg+xml"
   };
-  res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream" });
+  res.writeHead(200, {
+    "Content-Type": types[ext] || "application/octet-stream",
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
+  });
+  if (cleanPath === "/index.html") {
+    const assetVersion = Math.max(
+      fs.statSync(path.join(WEB_ROOT, "app.js")).mtimeMs,
+      fs.statSync(path.join(WEB_ROOT, "styles.css")).mtimeMs
+    ).toString(36).replace(".", "");
+    const html = fs.readFileSync(filePath, "utf-8")
+      .replace('href="/styles.css"', `href="/styles.css?v=${assetVersion}"`)
+      .replace('src="/app.js"', `src="/app.js?v=${assetVersion}"`);
+    res.end(html);
+    return;
+  }
   fs.createReadStream(filePath).pipe(res);
 }
 
@@ -111,6 +129,19 @@ async function requireUser(req, res) {
 }
 
 async function handleApi(req, res, url) {
+  if (req.method === "GET" && url.pathname === "/api/health") {
+    return sendJson(res, 200, {
+      ok: true,
+      app: APP_ID,
+      status: "ready",
+      routes: {
+        register: "/api/auth/register",
+        login: "/api/auth/login",
+        bot_status: "/api/bot-runtime/status"
+      }
+    });
+  }
+
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
     const body = await readJson(req);
     const created = createUser(body);
@@ -127,6 +158,15 @@ async function handleApi(req, res, url) {
     const session = createSession(verified.user.user_id);
     res.setHeader("Set-Cookie", `session=${session.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`);
     return sendJson(res, 200, { ok: true, user: verified.user });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/reset-password") {
+    const body = await readJson(req);
+    const reset = resetLocalPassword(body);
+    if (!reset.ok) return sendJson(res, 400, reset);
+    const session = createSession(reset.user.user_id);
+    res.setHeader("Set-Cookie", `session=${session.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`);
+    return sendJson(res, 200, { ok: true, user: reset.user });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/logout") {
@@ -179,12 +219,12 @@ async function handleApi(req, res, url) {
       source: "web_demo",
       client_name: "Олена Демонстраційна",
       client_contact: "+380501112233",
-      product_name: "Chocolate Cake",
+      product_name: "Шоколадний торт",
       quantity: 2,
       desired_date: new Date(Date.now() + 2 * 86_400_000).toISOString(),
       restrictions_or_allergies: "без горіхів",
       preferences: "більше ягід",
-      customizations: [{ name: "Add raspberry" }, { name: "Remove nuts" }, { name: "Add inscription", custom_value: "Happy Birthday" }],
+      customizations: [{ name: "Додати малину" }, { name: "Без горіхів" }, { name: "Додати напис", custom_value: "Happy Birthday" }],
       urgent: false
     });
     return sendJson(res, 200, { ok: true, order });
@@ -279,6 +319,18 @@ async function handleApi(req, res, url) {
     const body = await readJson(req);
     const result = addManualOrderMaterial(body, auth.user.user_id || "web");
     return sendJson(res, 200, { ok: true, result, inventory: getInventoryWorkspace() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/calendar/reschedule") {
+    const body = await readJson(req);
+    const event = rescheduleOrderProduction(body);
+    return sendJson(res, 200, { ok: true, event, dashboard: await getDashboardSummary() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/calendar/block") {
+    const body = await readJson(req);
+    const block = blockCalendarTime({ ...body, created_by: auth.user.user_id || "web" });
+    return sendJson(res, 200, { ok: true, block, dashboard: await getDashboardSummary() });
   }
 
   if (req.method === "GET" && url.pathname === "/api/catalog") {
@@ -447,11 +499,18 @@ async function handleApi(req, res, url) {
     return sendJson(res, result.ok ? 200 : 400, { ok: result.ok, voice, result });
   }
 
-  return sendJson(res, 404, { ok: false, error: "Unknown API route." });
+  return sendJson(res, 404, {
+    ok: false,
+    error: "Маршрут API не знайдено. Найчастіше це означає, що відкрито старий сервер або інший застосунок на цьому порту. Закрийте старий запуск, запустіть START_APP.bat ще раз і оновіть сторінку.",
+    code: "UNKNOWN_API_ROUTE",
+    route: `${req.method} ${url.pathname}`
+  });
 }
 
 export async function createWebServer() {
+  const runtimePort = process.env.PORT;
   loadEnvFile();
+  if (runtimePort) process.env.PORT = runtimePort;
   await initStore();
 
   return http.createServer(async (req, res) => {

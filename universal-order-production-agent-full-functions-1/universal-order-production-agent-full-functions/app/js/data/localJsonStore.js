@@ -9,7 +9,18 @@ export class LocalJsonStore {
 
   load() {
     if (fs.existsSync(this.filePath)) {
-      this.data = JSON.parse(fs.readFileSync(this.filePath, "utf-8"));
+      const raw = fs.readFileSync(this.filePath, "utf-8").trim();
+      if (!raw) {
+        this.data = {};
+        return this.data;
+      }
+      try {
+        this.data = JSON.parse(raw);
+      } catch (error) {
+        const backupPath = `${this.filePath}.invalid-${Date.now()}.bak`;
+        fs.copyFileSync(this.filePath, backupPath);
+        this.data = {};
+      }
     }
     return this.data;
   }

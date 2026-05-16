@@ -289,6 +289,46 @@ label em {
   font-weight: 700;
 }
 
+.field-hint {
+  display: block;
+  min-height: 18px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.field-ok input,
+.field-ok select {
+  border-color: #2f8f77;
+  box-shadow: 0 0 0 3px rgba(47, 143, 119, 0.12);
+}
+
+.field-ok .field-hint,
+.field-saved .field-hint {
+  color: #207056;
+}
+
+.field-saved input,
+.field-saved select {
+  border-color: #b9ddc9;
+  background: #f8fcf9;
+}
+
+.field-error input,
+.field-error select,
+input.missing-field,
+input.invalid-field,
+select.missing-field,
+select.invalid-field {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(166, 54, 54, 0.12);
+}
+
+.field-error .field-hint {
+  color: var(--danger);
+}
+
 input,
 select {
   width: 100%;
@@ -299,6 +339,26 @@ select {
   color: var(--ink);
   padding: 0 11px;
   transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.select-search {
+  min-height: 38px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: #c9d8d1;
+  background: #fbfefd;
+}
+
+.select-search + select {
+  margin-top: -7px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.select-search-missing {
+  border-color: var(--danger);
+  background: #fff8f8;
+  box-shadow: 0 0 0 3px rgba(166, 54, 54, 0.1);
 }
 
 input:hover,
@@ -465,6 +525,49 @@ label:focus-within span {
   background: #f1faf4;
 }
 
+.connection-status {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.connection-status-item,
+.connection-status-path {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.connection-status-item strong,
+.connection-status-path strong {
+  color: var(--ink);
+}
+
+.connection-status-item.ok {
+  border-color: #b9ddc9;
+  background: #f1faf4;
+}
+
+.connection-status-item.missing {
+  border-color: #f0d6b3;
+  background: #fff9ef;
+}
+
+.connection-status-path {
+  display: grid;
+  gap: 4px;
+}
+
+.connection-status-path span {
+  overflow-wrap: anywhere;
+}
+
 .bot-runtime-card {
   border: 1px solid #b9ddc9;
   border-radius: 8px;
@@ -518,6 +621,331 @@ label:focus-within span {
   gap: 18px;
 }
 
+.order-calendar-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfb;
+  padding: 14px;
+}
+
+.section-head-inline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-head-inline h3,
+.section-head-inline p {
+  margin: 0;
+}
+
+.section-head-inline > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.order-calendar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.order-calendar-card {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.order-calendar-date,
+.order-calendar-main,
+.order-calendar-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.order-calendar-main {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.order-calendar-card strong,
+.order-calendar-card span {
+  overflow-wrap: anywhere;
+}
+
+.order-calendar-date span,
+.order-calendar-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.order-status-pill {
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--focus-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.order-status-work {
+  border-left-color: #b85f36;
+}
+
+.order-status-ready {
+  border-left-color: #2f8f77;
+}
+
+.order-status-risk {
+  border-left-color: var(--danger);
+  background: #fff8f8;
+}
+
+.order-status-new {
+  border-left-color: #607d8b;
+}
+
+.calendar-work-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(170px, 1fr));
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.module-workflow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.module-workflow span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.calendar-action-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.calendar-action-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.calendar-primary-action {
+  border-left: 4px solid var(--accent);
+}
+
+.calendar-secondary-action {
+  background: #f8faf8;
+}
+
+.calendar-action-panel .compact {
+  margin-bottom: 0;
+}
+
+.calendar-action-panel label {
+  display: grid;
+  gap: 6px;
+}
+
+.calendar-action-panel select,
+.calendar-action-panel input {
+  width: 100%;
+}
+
+.calendar-day {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 9px;
+  min-width: 170px;
+}
+
+.calendar-day.is-full {
+  background: #fff8f8;
+  border-color: rgba(176, 63, 55, 0.35);
+}
+
+.calendar-day-head,
+.calendar-capacity,
+.kanban-column-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.calendar-day-head span,
+.calendar-capacity span,
+.kanban-card small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-capacity {
+  display: grid;
+}
+
+.calendar-capacity meter {
+  width: 100%;
+}
+
+.calendar-day-orders,
+.kanban-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-slot {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 7px;
+  background: var(--soft);
+  color: var(--ink);
+  padding: 8px;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar-block {
+  border: 1px dashed var(--danger);
+  border-radius: 7px;
+  padding: 8px;
+  color: var(--danger);
+  background: #fff8f8;
+  font-weight: 800;
+  display: grid;
+  gap: 2px;
+}
+
+.calendar-block span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-free,
+.kanban-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(190px, 1fr));
+  gap: 10px;
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.kanban-column {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8faf8;
+  padding: 10px;
+  min-width: 190px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.kanban-card {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.procurement-preview-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffdfa;
+  padding: 14px;
+}
+
+.procurement-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.procurement-preview-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.procurement-preview-summary strong {
+  color: var(--ink);
+}
+
+.procurement-preview-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.procurement-preview-item {
+  border: 1px solid var(--line);
+  border-left: 5px solid #b85f36;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.procurement-preview-item div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.procurement-preview-item span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.procurement-preview-item strong,
+.procurement-preview-item span {
+  overflow-wrap: anywhere;
+}
+
 .module-nav {
   position: sticky;
   top: 0;
@@ -567,6 +995,23 @@ label:focus-within span {
   animation: sectionIn 140ms ease-out;
 }
 
+.separated-module {
+  display: grid;
+  gap: 18px;
+}
+
+.separated-module-body {
+  display: grid;
+  gap: 18px;
+}
+
+.separated-module-body > .inventory-form,
+.separated-module-body > .procurement-panel,
+.separated-module-body > .order-calendar-panel,
+.separated-module-body > div {
+  max-width: 100%;
+}
+
 @keyframes sectionIn {
   from {
     opacity: 0;
@@ -587,6 +1032,35 @@ label:focus-within span {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+}
+
+.inventory-layout #lotForm {
+  order: 1;
+}
+
+.inventory-layout [data-reference-create-toggle="material"] {
+  order: 2;
+}
+
+.inventory-layout #materialForm {
+  order: 3;
+}
+
+[data-reference-create-toggle="product"] {
+  order: 2;
+}
+
+#techCardForm {
+  order: 1;
+}
+
+#productForm {
+  order: 3;
+}
+
+.reference-create-toggle {
+  width: fit-content;
+  justify-self: start;
 }
 
 .procurement-panel {
@@ -899,7 +1373,8 @@ label:focus-within span {
   cursor: pointer;
 }
 
-.help-overlay {
+.help-overlay,
+.lookup-overlay {
   position: fixed;
   inset: 0;
   z-index: 20;
@@ -909,7 +1384,8 @@ label:focus-within span {
   padding: 18px;
 }
 
-.help-dialog {
+.help-dialog,
+.lookup-dialog {
   width: min(920px, 100%);
   max-height: min(760px, calc(100vh - 36px));
   display: grid;
@@ -922,11 +1398,29 @@ label:focus-within span {
   padding: 18px;
 }
 
+.lookup-dialog {
+  width: min(520px, 100%);
+  grid-template-rows: auto;
+}
+
 .help-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.lookup-dialog p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.lookup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .help-search {
@@ -997,6 +1491,7 @@ label:focus-within span {
   .module-grid,
   .report-grid,
   .report-controls,
+  .calendar-action-grid,
   .field-grid {
     grid-template-columns: 1fr;
   }
@@ -1007,6 +1502,7 @@ label:focus-within span {
   }
 
   .topbar,
+  .section-head-inline,
   .panel-head {
     align-items: stretch;
     flex-direction: column;

@@ -126,11 +126,16 @@ export function getLocalBotStatus(options = {}) {
   if (pid && !running && fs.existsSync(p.pidFile)) {
     fs.rmSync(p.pidFile, { force: true });
   }
+  const envValues = fs.existsSync(p.envFile) ? loadEnvFile(p.envFile) : {};
+  const missing = fs.existsSync(p.envFile) ? validateBotConfig(envValues) : ["Configuration file .env"];
   return {
     running,
     pid: running ? Number(pid) : null,
     watchdog_running: isProcessRunning(readPid(p.watchdogPidFile)),
     autostart: queryAutostartStatus(),
+    config_ready: missing.length === 0,
+    config_missing: missing,
+    env_file: p.envFile,
     out_log: p.outLogFile,
     err_log: p.errLogFile,
     watchdog_log: p.watchdogLogFile,
@@ -164,6 +169,12 @@ export async function startLocalTelegramBot(options = {}) {
   if (!fs.existsSync(p.envFile)) {
     const error = new Error("Configuration file .env was not found. Збережіть налаштування ресурсів перед запуском бота.");
     error.code = "BOT_CONFIG_MISSING";
+    throw error;
+  }
+
+  if (!fs.existsSync(p.botScript)) {
+    const error = new Error("Файл запуску Telegram-бота не знайдено. Перевірте цілісність папки проєкту.");
+    error.code = "BOT_SCRIPT_MISSING";
     throw error;
   }
 

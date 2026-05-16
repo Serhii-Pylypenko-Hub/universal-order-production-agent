@@ -2,6 +2,7 @@ import { appendRow, findOne, findRows } from "../data/rowRepository.js";
 import { id } from "../utils/ids.js";
 import { nowIso } from "../utils/time.js";
 import { validateUnit } from "../utils/unitConverter.js";
+import { unitLabel } from "../utils/unitLabels.js";
 import { logActivity } from "../audit/auditService.js";
 
 export function normalizeMaterialName(name) {
@@ -33,8 +34,8 @@ export function findSimilarMaterials(name) {
 
 export function createMaterial(input) {
   const name = String(input.name || "").trim();
-  if (!name) throw new Error("Material name is required.");
-  if (!validateUnit(input.unit)) throw new Error(`Invalid material unit: ${input.unit}`);
+  if (!name) throw new Error("Не заповнено назву матеріалу.");
+  if (!validateUnit(input.unit)) throw new Error(`Некоректна одиниця виміру матеріалу: ${unitLabel(input.unit) || input.unit}. Оберіть кг, г, л, мл, шт, уп. або кор.`);
 
   const existing = findMaterialByName(name);
   if (existing) {

@@ -94,6 +94,24 @@ export function verifyLogin({ email, password }, filePath = DEFAULT_AUTH_PATH) {
   return { ok: true, user: publicUser(user) };
 }
 
+export function resetLocalPassword({ email, password }, filePath = DEFAULT_AUTH_PATH) {
+  const data = readAuth(filePath);
+  const cleanEmail = normalizeEmail(email);
+  const cleanPassword = String(password || "");
+  const user = data.users.find(row => row.email === cleanEmail);
+
+  if (!cleanEmail) return { ok: false, error: "Вкажіть пошту, для якої потрібно змінити пароль." };
+  if (!user) return { ok: false, error: "Користувача з такою поштою не знайдено. Спочатку створіть акаунт." };
+  if (cleanPassword.length < 8) return { ok: false, error: "Новий пароль має містити мінімум 8 символів." };
+
+  const nextPassword = hashPassword(cleanPassword);
+  user.password_hash = nextPassword.hash;
+  user.password_salt = nextPassword.salt;
+  user.password_reset_at = nowIso();
+  writeAuth(data, filePath);
+  return { ok: true, user: publicUser(user) };
+}
+
 export function createSession(userId, filePath = DEFAULT_AUTH_PATH) {
   const data = readAuth(filePath);
   const token = crypto.randomBytes(32).toString("hex");

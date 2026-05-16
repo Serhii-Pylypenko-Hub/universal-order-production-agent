@@ -15,6 +15,7 @@ import { healthCheckWorkspace } from "../setup/healthCheck.js";
 import { nowIso } from "../utils/time.js";
 import { createDiscountRule } from "../pricing/discountService.js";
 import { completeOrderProduction } from "../production/productionService.js";
+import { unitLabel } from "../utils/unitLabels.js";
 
 // Inline keyboards for Telegram
 function ordersKeyboard() {
@@ -326,7 +327,7 @@ function formatProducts(products) {
   return {
     text: "<b>Продукти:</b>\n" + products
       .filter(p => p.is_active !== false)
-      .map(p => `• ${p.product_id} | ${p.name} | ${p.base_price || "?"} грн / ${p.unit || "од."}`)
+      .map(p => `• ${p.product_id} | ${p.name} | ${p.base_price || "?"} грн / ${unitLabel(p.unit) || "од."}`)
       .join("\n")
   };
 }
@@ -336,7 +337,7 @@ function formatComponents(components) {
   return {
     text: "<b>Матеріали:</b>\n" + components
       .filter(c => c.is_active !== false)
-      .map(c => `• ${c.component_id} | ${c.name} | ${c.unit_cost || "?"} грн / ${c.unit || "од."}`)
+      .map(c => `• ${c.component_id} | ${c.name} | ${c.unit_cost || "?"} грн / ${unitLabel(c.unit) || "од."}`)
       .join("\n")
   };
 }
@@ -360,13 +361,13 @@ function formatRecipe(query) {
     const available = stockRow
       ? Number(stockRow.current_qty || 0) - Number(stockRow.reserved_qty || 0)
       : 0;
-    return `• ${component?.name || row.component_id}: ${row.qty_per_unit} ${row.unit || component?.unit || ""} на ${product.unit}; залишок ${available} ${stockRow?.unit || component?.unit || ""}`;
+    return `• ${component?.name || row.component_id}: ${row.qty_per_unit} ${unitLabel(row.unit || component?.unit)} на ${unitLabel(product.unit)}; залишок ${available} ${unitLabel(stockRow?.unit || component?.unit)}`;
   });
 
   return {
     text: [
       `<b>Рецепт: ${product.name}</b>`,
-      `Ціна: ${product.base_price || "?"} грн / ${product.unit || "од."}`,
+      `Ціна: ${product.base_price || "?"} грн / ${unitLabel(product.unit) || "од."}`,
       "",
       ...lines
     ].join("\n")
@@ -405,7 +406,7 @@ function formatStock(rows) {
   return {
     text: "<b>Залишки:</b>\n" + rows.map(r => {
       const avail = Number(r.current_qty || 0) - Number(r.reserved_qty || 0);
-      return `• ${r.component_id}: ${avail} ${r.unit || "pcs"} (рез: ${r.reserved_qty || 0})`;
+      return `• ${r.component_id}: ${avail} ${unitLabel(r.unit || "pcs")} (рез: ${r.reserved_qty || 0})`;
     }).join("\n")
   };
 }

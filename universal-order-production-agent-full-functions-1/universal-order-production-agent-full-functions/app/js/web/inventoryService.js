@@ -225,7 +225,15 @@ export function getInventoryWorkspace() {
     procurement_plan: getProcurementPlan(),
     table_settings: tableSettings,
     validation_rules: validationRules,
-    units: ["kg", "g", "l", "ml", "pcs", "pack", "box"]
+    units: [
+      { value: "kg", label: "кг" },
+      { value: "g", label: "г" },
+      { value: "l", label: "л" },
+      { value: "ml", label: "мл" },
+      { value: "pcs", label: "шт" },
+      { value: "pack", label: "уп." },
+      { value: "box", label: "кор." }
+    ]
   };
 }
 
@@ -233,7 +241,7 @@ export function createInventoryMaterial(input) {
   assertValid("Створення матеріалу", input, {
     required: [
       { name: "name", label: "Назва матеріалу", instruction_uk: "Вкажіть назву матеріалу, наприклад Цукор білий." },
-      { name: "unit", label: "Одиниця виміру", instruction_uk: "Оберіть базову одиницю: kg, g, l, ml, pcs, pack або box." }
+      { name: "unit", label: "Одиниця виміру", instruction_uk: "Оберіть базову одиницю: кг, г, л, мл, шт, уп. або кор." }
     ]
   });
 

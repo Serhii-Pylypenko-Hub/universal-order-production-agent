@@ -52,7 +52,7 @@ function seedBaseTemplates() {
 function seedValidationAndTableUiSettings() {
   const validationRules = [
     ["VAL-MAT-001", "Component", "name", "Назва матеріалу", "required", "", "Вкажіть коротку зрозумілу назву матеріалу, наприклад Цукор білий."],
-    ["VAL-MAT-002", "Component", "unit", "Одиниця виміру", "required", "", "Оберіть одиницю виміру: kg, g, l, ml, pcs, pack або box."],
+    ["VAL-MAT-002", "Component", "unit", "Одиниця виміру", "required", "", "Оберіть одиницю виміру: кг, г, л, мл, шт, уп. або кор."],
     ["VAL-STOCK-001", "StockLot", "qty", "Кількість", "positive_number", "", "Вкажіть кількість більше нуля."],
     ["VAL-STOCK-002", "StockLot", "unit_cost", "Ціна за одиницю", "positive_number", "", "Вкажіть закупівельну ціну за базову одиницю матеріалу."],
     ["VAL-ORDER-001", "Order", "product_name", "Продукт", "required", "", "Оберіть продукт або створіть новий продукт перед замовленням."],

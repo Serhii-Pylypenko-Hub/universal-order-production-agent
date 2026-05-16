@@ -1,6 +1,10 @@
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const ENV_PATH = ".env";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = path.resolve(__dirname, "../../..");
+const ENV_PATH = path.join(PROJECT_ROOT, ".env");
 const SECRET_KEYS = new Set([
   "TELEGRAM_BOT_TOKEN",
   "TELEGRAM_WEBHOOK_SECRET",
@@ -77,6 +81,7 @@ export function saveEnvPatch(patch, filePath = ENV_PATH) {
   if (!next.PORT) next.PORT = "3000";
   if (!next.AI_MODEL) next.AI_MODEL = "openai/gpt-4o-mini";
   if (!next.LOCAL_DATA_PATH) next.LOCAL_DATA_PATH = "./data/local_workspace.json";
+  fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
   fs.writeFileSync(filePath, serializeEnv(next));
   applyEnv(next);
   return next;
@@ -171,7 +176,15 @@ export function validateConnectionPatchDetailed(patch) {
 
 export function getConnectionConfig(filePath = ENV_PATH) {
   const values = loadEnvFile(filePath);
+  const resolvedPath = path.resolve(filePath);
+  const exists = fs.existsSync(resolvedPath);
+  const stat = exists ? fs.statSync(resolvedPath) : null;
   return {
+    env: {
+      path: resolvedPath,
+      exists,
+      updated_at: stat ? stat.mtime.toISOString() : ""
+    },
     telegram: {
       token_set: Boolean(values.TELEGRAM_BOT_TOKEN),
       token_length: values.TELEGRAM_BOT_TOKEN ? values.TELEGRAM_BOT_TOKEN.length : 0,

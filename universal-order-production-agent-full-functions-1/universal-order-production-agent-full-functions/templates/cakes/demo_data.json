@@ -1,6 +1,6 @@
 {
   "settings": {
-    "business_name": "Demo Cakes",
+    "business_name": "Демо кондитерська",
     "currency": "UAH",
     "work_start": "09:00",
     "lunch_start": "13:00",
@@ -15,8 +15,8 @@
   },
   "products": [
     {
-      "name": "Chocolate Cake",
-      "description": "Chocolate demo cake",
+      "name": "Шоколадний торт",
+      "description": "Демо шоколадний торт",
       "image_url": "/assets/products/chocolate-cake.svg",
       "unit": "kg",
       "base_price": 900,
@@ -26,8 +26,8 @@
       "cleanup_buffer": 0.5
     },
     {
-      "name": "Honey Cake",
-      "description": "Honey demo cake",
+      "name": "Медовик",
+      "description": "Демо медовик",
       "image_url": "/assets/products/honey-cake.svg",
       "unit": "kg",
       "base_price": 800,
@@ -37,8 +37,8 @@
       "cleanup_buffer": 0.5
     },
     {
-      "name": "Berry Cheesecake",
-      "description": "Berry demo cake",
+      "name": "Ягідний чизкейк",
+      "description": "Демо ягідний чизкейк",
       "image_url": "/assets/products/berry-cheesecake.svg",
       "unit": "kg",
       "base_price": 1000,
@@ -48,8 +48,8 @@
       "cleanup_buffer": 0.5
     },
     {
-      "name": "Napoleon Cake",
-      "description": "Napoleon demo cake",
+      "name": "Наполеон",
+      "description": "Демо торт Наполеон",
       "image_url": "/assets/products/napoleon-cake.svg",
       "unit": "kg",
       "base_price": 850,
@@ -59,8 +59,8 @@
       "cleanup_buffer": 0.5
     },
     {
-      "name": "Carrot Cake",
-      "description": "Carrot cake with cream cheese",
+      "name": "Морквяний торт",
+      "description": "Морквяний торт з крем-сиром",
       "image_url": "/assets/products/carrot-cake.svg",
       "unit": "kg",
       "base_price": 780,
@@ -70,8 +70,8 @@
       "cleanup_buffer": 0.5
     },
     {
-      "name": "Cupcake Box",
-      "description": "Box of assorted cupcakes",
+      "name": "Набір капкейків",
+      "description": "Набір асорті капкейків",
       "image_url": "/assets/products/cupcake-box.svg",
       "unit": "box",
       "base_price": 600,
@@ -83,84 +83,84 @@
   ],
   "components": [
     {
-      "name": "Flour",
+      "name": "Борошно",
       "unit": "kg",
       "unit_cost": 35,
       "stock": 10,
       "min_qty": 2
     },
     {
-      "name": "Sugar",
+      "name": "Цукор",
       "unit": "kg",
       "unit_cost": 45,
       "stock": 8,
       "min_qty": 2
     },
     {
-      "name": "Cocoa",
+      "name": "Какао",
       "unit": "kg",
       "unit_cost": 250,
       "stock": 0.8,
       "min_qty": 0.5
     },
     {
-      "name": "Cream",
+      "name": "Вершки",
       "unit": "kg",
       "unit_cost": 180,
       "stock": 1.1,
       "min_qty": 1
     },
     {
-      "name": "Berries",
+      "name": "Ягоди",
       "unit": "kg",
       "unit_cost": 220,
       "stock": 0,
       "min_qty": 1
     },
     {
-      "name": "Raspberry",
+      "name": "Малина",
       "unit": "kg",
       "unit_cost": 260,
       "stock": 0.25,
       "min_qty": 0.5
     },
     {
-      "name": "Nuts",
+      "name": "Горіхи",
       "unit": "kg",
       "unit_cost": 300,
       "stock": 1.0,
       "min_qty": 0.3
     },
     {
-      "name": "Inscription",
+      "name": "Напис",
       "unit": "pcs",
       "unit_cost": 30,
       "stock": 50,
       "min_qty": 10
     },
     {
-      "name": "Carrot",
+      "name": "Морква",
       "unit": "kg",
       "unit_cost": 40,
       "stock": 5,
       "min_qty": 1
     },
     {
-      "name": "Cream Cheese",
+      "name": "Крем-сир",
       "unit": "kg",
       "unit_cost": 210,
       "stock": 2,
       "min_qty": 0.7
     },
     {
-      "name": "Cupcake Base",
+      "name": "Основа капкейка",
       "unit": "pcs",
       "unit_cost": 18,
       "stock": 8,
       "min_qty": 12
     },
     {
-      "name": "Vanilla",
+      "name": "Ваніль",
       "unit": "kg",
       "unit_cost": 500,
       "stock": 0.02,
@@ -169,127 +169,127 @@
   ],
   "bom": [
     {
-      "product": "Chocolate Cake",
-      "component": "Flour",
+      "product": "Шоколадний торт",
+      "component": "Борошно",
       "qty_per_unit": 0.45
     },
     {
-      "product": "Chocolate Cake",
-      "component": "Sugar",
+      "product": "Шоколадний торт",
+      "component": "Цукор",
       "qty_per_unit": 0.25
     },
     {
-      "product": "Chocolate Cake",
-      "component": "Cocoa",
+      "product": "Шоколадний торт",
+      "component": "Какао",
       "qty_per_unit": 0.1
     },
     {
-      "product": "Chocolate Cake",
-      "component": "Cream",
+      "product": "Шоколадний торт",
+      "component": "Вершки",
       "qty_per_unit": 0.35
     },
     {
-      "product": "Berry Cheesecake",
-      "component": "Berries",
+      "product": "Ягідний чизкейк",
+      "component": "Ягоди",
       "qty_per_unit": 0.3
     },
     {
-      "product": "Berry Cheesecake",
-      "component": "Cream",
+      "product": "Ягідний чизкейк",
+      "component": "Вершки",
       "qty_per_unit": 0.45
     },
     {
-      "product": "Honey Cake",
-      "component": "Flour",
+      "product": "Медовик",
+      "component": "Борошно",
       "qty_per_unit": 0.4
     },
     {
-      "product": "Honey Cake",
-      "component": "Sugar",
+      "product": "Медовик",
+      "component": "Цукор",
       "qty_per_unit": 0.2
     },
     {
-      "product": "Napoleon Cake",
-      "component": "Flour",
+      "product": "Наполеон",
+      "component": "Борошно",
       "qty_per_unit": 0.5
     },
     {
-      "product": "Napoleon Cake",
-      "component": "Cream",
+      "product": "Наполеон",
+      "component": "Вершки",
       "qty_per_unit": 0.4
     },
     {
-      "product": "Carrot Cake",
-      "component": "Flour",
+      "product": "Морквяний торт",
+      "component": "Борошно",
       "qty_per_unit": 0.35
     },
     {
-      "product": "Carrot Cake",
-      "component": "Sugar",
+      "product": "Морквяний торт",
+      "component": "Цукор",
       "qty_per_unit": 0.18
     },
     {
-      "product": "Carrot Cake",
-      "component": "Carrot",
+      "product": "Морквяний торт",
+      "component": "Морква",
       "qty_per_unit": 0.45
     },
     {
-      "product": "Carrot Cake",
-      "component": "Cream Cheese",
+      "product": "Морквяний торт",
+      "component": "Крем-сир",
       "qty_per_unit": 0.28
     },
     {
-      "product": "Cupcake Box",
-      "component": "Cupcake Base",
+      "product": "Набір капкейків",
+      "component": "Основа капкейка",
       "qty_per_unit": 12
     },
     {
-      "product": "Cupcake Box",
-      "component": "Cream",
+      "product": "Набір капкейків",
+      "component": "Вершки",
       "qty_per_unit": 0.35
     },
     {
-      "product": "Cupcake Box",
-      "component": "Vanilla",
+      "product": "Набір капкейків",
+      "component": "Ваніль",
       "qty_per_unit": 0.03
     }
   ],
   "option_groups": [
     {
-      "product": "Chocolate Cake",
-      "name": "Add-ons",
+      "product": "Шоколадний торт",
+      "name": "Додатки",
       "selection_type": "multi",
       "is_required": false,
       "min_select": 0,
       "max_select": 5
     },
     {
-      "product": "Chocolate Cake",
-      "name": "Remove ingredients",
+      "product": "Шоколадний торт",
+      "name": "Без інгредієнтів",
       "selection_type": "multi",
       "is_required": false,
       "min_select": 0,
       "max_select": 5
     },
     {
-      "product": "Berry Cheesecake",
-      "name": "Add-ons",
+      "product": "Ягідний чизкейк",
+      "name": "Додатки",
       "selection_type": "multi",
       "is_required": false,
       "min_select": 0,
       "max_select": 5
     },
     {
-      "product": "Carrot Cake",
-      "name": "Add-ons",
+      "product": "Морквяний торт",
+      "name": "Додатки",
       "selection_type": "multi",
       "is_required": false,
       "min_select": 0,
       "max_select": 5
     },
     {
-      "product": "Cupcake Box",
-      "name": "Add-ons",
+      "product": "Набір капкейків",
+      "name": "Додатки",
       "selection_type": "multi",
       "is_required": false,
       "min_select": 0,
@@ -298,108 +298,108 @@
   ],
   "product_options": [
     {
-      "product": "Chocolate Cake",
-      "group": "Add-ons",
-      "name": "Add raspberry",
+      "product": "Шоколадний торт",
+      "group": "Додатки",
+      "name": "Додати малину",
       "type": "add",
-      "component": "Raspberry",
+      "component": "Малина",
       "qty_delta": 0.2,
       "unit": "kg",
       "price_delta": 120,
       "cost_delta": 52,
       "work_hours_delta": 0.1,
-      "description": "Add raspberry to cake"
+      "description": "Додати малину до торта"
     },
     {
-      "product": "Chocolate Cake",
-      "group": "Remove ingredients",
-      "name": "Remove nuts",
+      "product": "Шоколадний торт",
+      "group": "Без інгредієнтів",
+      "name": "Без горіхів",
       "type": "remove",
-      "component": "Nuts",
+      "component": "Горіхи",
       "qty_delta": -0.1,
       "unit": "kg",
       "price_delta": 0,
       "cost_delta": -30,
       "work_hours_delta": 0,
-      "description": "Remove nuts from recipe or avoid nuts"
+      "description": "Прибрати горіхи з рецепту або уникнути алергену"
     },
     {
-      "product": "Chocolate Cake",
-      "group": "Add-ons",
-      "name": "Extra chocolate",
+      "product": "Шоколадний торт",
+      "group": "Додатки",
+      "name": "Більше шоколаду",
       "type": "add",
-      "component": "Cocoa",
+      "component": "Какао",
       "qty_delta": 0.08,
       "unit": "kg",
       "price_delta": 100,
       "cost_delta": 20,
       "work_hours_delta": 0.05,
-      "description": "More chocolate / cocoa"
+      "description": "Більше шоколаду / какао"
     },
     {
-      "product": "Chocolate Cake",
-      "group": "Add-ons",
-      "name": "Add nuts",
+      "product": "Шоколадний торт",
+      "group": "Додатки",
+      "name": "Додати горіхи",
       "type": "add",
-      "component": "Nuts",
+      "component": "Горіхи",
       "qty_delta": 0.12,
       "unit": "kg",
       "price_delta": 90,
       "cost_delta": 36,
       "work_hours_delta": 0.1,
-      "description": "Add nuts"
+      "description": "Додати горіхи"
     },
     {
-      "product": "Chocolate Cake",
-      "group": "Add-ons",
-      "name": "Add inscription",
+      "product": "Шоколадний торт",
+      "group": "Додатки",
+      "name": "Додати напис",
       "type": "add",
-      "component": "Inscription",
+      "component": "Напис",
       "qty_delta": 1,
       "unit": "pcs",
       "price_delta": 80,
       "cost_delta": 30,
       "work_hours_delta": 0.1,
-      "description": "Add text inscription"
+      "description": "Додати текстовий напис"
     },
     {
-      "product": "Berry Cheesecake",
-      "group": "Add-ons",
-      "name": "Extra berries",
+      "product": "Ягідний чизкейк",
+      "group": "Додатки",
+      "name": "Більше ягід",
       "type": "add",
-      "component": "Berries",
+      "component": "Ягоди",
       "qty_delta": 0.2,
       "unit": "kg",
       "price_delta": 110,
       "cost_delta": 44,
       "work_hours_delta": 0.1,
-      "description": "Extra berries"
+      "description": "Більше ягід"
     },
     {
-      "product": "Carrot Cake",
-      "group": "Add-ons",
-      "name": "Add nuts",
+      "product": "Морквяний торт",
+      "group": "Додатки",
+      "name": "Додати горіхи",
       "type": "add",
-      "component": "Nuts",
+      "component": "Горіхи",
       "qty_delta": 0.12,
       "unit": "kg",
       "price_delta": 90,
       "cost_delta": 36,
       "work_hours_delta": 0.1,
-      "description": "Add nuts to carrot cake"
+      "description": "Додати горіхи до морквяного торта"
     },
     {
-      "product": "Cupcake Box",
-      "group": "Add-ons",
-      "name": "Add inscription",
+      "product": "Набір капкейків",
+      "group": "Додатки",
+      "name": "Додати напис",
       "type": "add",
-      "component": "Inscription",
+      "component": "Напис",
       "qty_delta": 1,
       "unit": "pcs",
       "price_delta": 80,
       "cost_delta": 30,
       "work_hours_delta": 0.1,
-      "description": "Add text inscription to cupcake box"
+      "description": "Додати напис до набору капкейків"
     }
   ]
 }

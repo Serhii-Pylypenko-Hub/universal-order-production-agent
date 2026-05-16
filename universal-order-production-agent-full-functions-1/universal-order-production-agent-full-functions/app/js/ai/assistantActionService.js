@@ -9,6 +9,7 @@ import { updateOrderStatus } from "../orders/orderService.js";
 import { getInventoryBalanceOnDate, getMonthlyInventoryDifferences } from "../reports/inventoryReportService.js";
 import { sendTelegramMessage } from "../tasks/notificationService.js";
 import { AI_MODES, getActiveAiMode, getBotAssistantSettings, isFullAssistantActive } from "./subscriptionService.js";
+import { unitLabel } from "../utils/unitLabels.js";
 
 function asNumber(value) {
   const number = Number(value);
@@ -49,6 +50,7 @@ function detectIntent(text) {
   if (/помісяч|місячн|monthly|різниц/.test(normalized)) return { intent: "monthly_inventory_differences", module: "reports", action: "analyze" };
   if (/склад|залишк|матеріал/.test(normalized)) return { intent: "show_inventory", module: "inventory", action: "read" };
   if (/закуп/.test(normalized)) return { intent: "analyze_purchases", module: "purchases", action: "analyze" };
+  if (/календар|план виробниц|завантаженн|робоч.*год|calendar/.test(normalized)) return { intent: "show_calendar", module: "calendar", action: "read" };
   if (/візьми.*роботу|взяти.*роботу|start.*production/.test(normalized)) return { intent: "start_production", module: "production", action: "mutate" };
   if (/зміни.*статус|постав.*статус|status/.test(normalized)) return { intent: "change_order_status", module: "production", action: "mutate" };
   if (/відправ.*повідом|надішли.*повідом|send.*message/.test(normalized)) return { intent: "send_message", module: "bot", action: "mutate" };
@@ -99,13 +101,13 @@ function formatShortages() {
   const inventory = getInventoryWorkspace();
   const rows = inventory.materials.filter(row => asNumber(row.available_qty) <= asNumber(row.min_qty));
   if (!rows.length) return "Критичних дефіцитів зараз немає.";
-  return rows.map(row => `${row.name}: доступно ${row.available_qty} ${row.unit}, мінімум ${row.min_qty}`).join("\n");
+  return rows.map(row => `${row.name}: доступно ${row.available_qty} ${unitLabel(row.unit)}, мінімум ${row.min_qty}`).join("\n");
 }
 
 function formatInventory() {
   const inventory = getInventoryWorkspace();
   return inventory.materials.slice(0, 20).map(row =>
-    `${row.name}: доступно ${row.available_qty} ${row.unit}, резерв ${row.reserved_qty}, статус ${row.availability_status}`
+    `${row.name}: доступно ${row.available_qty} ${unitLabel(row.unit)}, резерв ${row.reserved_qty}, статус ${row.availability_status}`
   ).join("\n") || "Склад порожній.";
 }
 
@@ -119,7 +121,7 @@ function formatPurchases() {
 function formatCatalog() {
   const catalog = getCatalogWorkspace();
   return catalog.products.slice(0, 20).map(product =>
-    `${product.name}: ${product.base_price} / ${product.unit}, техкарта ${product.tech_card_items.length} рядків`
+    `${product.name}: ${product.base_price} / ${unitLabel(product.unit)}, техкарта ${product.tech_card_items.length} рядків`
   ).join("\n") || "Каталог продуктів порожній.";
 }
 
@@ -127,6 +129,27 @@ function formatOrders() {
   const orders = getRows("Orders").filter(order => !["Closed", "Cancelled", "Delivered", "PickedUp"].includes(order.status));
   if (!orders.length) return "Активних замовлень немає.";
   return orders.slice(-20).reverse().map(order => `${order.order_id}: ${order.status}, дата ${String(order.desired_date || "").slice(0, 10)}, сума ${order.final_price || order.proposed_price || "?"}`).join("\n");
+}
+
+function formatCalendar() {
+  const orders = new Map(getRows("Orders").map(order => [order.order_id, order]));
+  const events = getRows("CalendarLog")
+    .filter(event => event.status !== "Cancelled")
+    .sort((a, b) => Date.parse(a.start_at || "") - Date.parse(b.start_at || ""))
+    .slice(0, 14);
+  const blocks = getRows("CalendarOverrides")
+    .filter(row => ["blocked", "block"].includes(String(row.type || "").toLowerCase()))
+    .slice(-8);
+  const planned = events.length
+    ? events.map(event => {
+      const order = orders.get(event.order_id) || {};
+      return `${String(event.start_at || "").slice(0, 16)} - ${event.order_id}: ${order.status || event.status || "Scheduled"}`;
+    }).join("\n")
+    : "Запланованих подій виробництва немає.";
+  const blocked = blocks.length
+    ? blocks.map(block => `${block.date} ${block.start_time || ""}-${block.end_time || ""}: ${block.reason || "заблоковано"}`).join("\n")
+    : "Блокувань робочого часу немає.";
+  return ["Календар виробництва:", planned, "", "Блокування:", blocked].join("\n");
 }
 
 function formatDailySummary() {
@@ -156,7 +179,7 @@ function extractMonths(text) {
 function formatInventoryBalanceOnDate(text) {
   const report = getInventoryBalanceOnDate(extractDate(text));
   const rows = report.rows.slice(0, 20).map(row =>
-    `${row.material_name}: ${row.qty} ${row.unit}, вартість ${row.value}`
+    `${row.material_name}: ${row.qty} ${unitLabel(row.unit)}, вартість ${row.value}`
   ).join("\n") || "Рухів складу до цієї дати немає.";
   return [`Баланс складу на ${report.date}`, `Позицій: ${report.totals.qty_positions}`, `Вартість: ${report.totals.value}`, "", rows].join("\n");
 }
@@ -176,7 +199,7 @@ function formatRecipe(text) {
     || catalog.products[0];
   if (!product) return "Каталог продуктів порожній. Спочатку створіть продукт і техкарту.";
   const items = product.tech_card_items?.length
-    ? product.tech_card_items.map(item => `- ${item.component_name}: ${item.qty_per_unit} ${item.unit}`).join("\n")
+    ? product.tech_card_items.map(item => `- ${item.component_name}: ${item.qty_per_unit} ${unitLabel(item.unit)}`).join("\n")
     : "Техкарта ще не заповнена.";
   return [`${product.name}`, "Інгредієнти / техкарта:", items].join("\n");
 }
@@ -297,6 +320,7 @@ export async function runAssistantCommand({ text, source = "web", confirmed = fa
     else if (detected.intent === "monthly_inventory_differences") message = formatMonthlyInventoryDifferences(text);
     else if (detected.intent === "show_inventory") message = formatInventory();
     else if (detected.intent === "analyze_purchases") message = formatPurchases();
+    else if (detected.intent === "show_calendar") message = formatCalendar();
     else if (detected.intent === "show_catalog") message = formatCatalog();
     else if (detected.intent === "read_recipe") {
       const allowed = assertBotPermission(botSettings, "allow_read_recipes", "Читання рецептів");
@@ -311,7 +335,7 @@ export async function runAssistantCommand({ text, source = "web", confirmed = fa
       if (orderId) {
         const details = getProductionOrderDetails(orderId);
         message = details
-          ? `${orderId}: ${details.order.status}\nМатеріали:\n${details.materials.map(row => `${row.component_name}: потрібно ${row.required_qty} ${row.unit}, резерв ${row.reserved_qty}, дефіцит ${row.missing_qty}`).join("\n")}`
+          ? `${orderId}: ${details.order.status}\nМатеріали:\n${details.materials.map(row => `${row.component_name}: потрібно ${row.required_qty} ${unitLabel(row.unit)}, резерв ${row.reserved_qty}, дефіцит ${row.missing_qty}`).join("\n")}`
           : `Замовлення ${orderId} не знайдено.`;
       } else {
         message = formatOrders();
@@ -323,6 +347,7 @@ export async function runAssistantCommand({ text, source = "web", confirmed = fa
         "- покажи дефіцит",
         "- покажи склад",
         "- проаналізуй закупки",
+        "- покажи календар",
         "- покажи активні замовлення",
         "- покажи замовлення ORD-...",
         "- візьми ORD-... в роботу (повний AI-режим, з підтвердженням)"

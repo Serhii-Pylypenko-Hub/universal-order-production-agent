@@ -7,18 +7,44 @@ export function getProductOptions(productId) {
   return findRows("ProductOptions", r => r.product_id === productId && String(r.is_active) !== "false");
 }
 
+const CUSTOMIZATION_ALIASES = new Map([
+  ["add raspberry", "Додати малину"],
+  ["додати малини", "Додати малину"],
+  ["більше малини", "Додати малину"],
+  ["extra chocolate", "Більше шоколаду"],
+  ["більше шоколаду", "Більше шоколаду"],
+  ["add nuts", "Додати горіхи"],
+  ["додати горіхи", "Додати горіхи"],
+  ["з горіхами", "Додати горіхи"],
+  ["remove nuts", "Без горіхів"],
+  ["no nuts", "Без горіхів"],
+  ["без горіхів", "Без горіхів"],
+  ["не класти горіхи", "Без горіхів"],
+  ["add inscription", "Додати напис"],
+  ["inscription", "Додати напис"],
+  ["напис", "Додати напис"],
+  ["extra berries", "Більше ягід"],
+  ["більше ягід", "Більше ягід"]
+]);
+
+function normalizeCustomizationName(value) {
+  const raw = String(value || "").trim();
+  return CUSTOMIZATION_ALIASES.get(raw.toLowerCase()) || raw;
+}
+
 export function resolveCustomizationInput(productId, customizations = []) {
   const options = getProductOptions(productId);
   return customizations.map(custom => {
+    const normalizedName = normalizeCustomizationName(custom.name || custom.option_name || "");
     const option = custom.option_id
       ? options.find(o => o.option_id === custom.option_id)
-      : options.find(o => o.name.toLowerCase() === String(custom.name || custom.option_name || "").toLowerCase());
+      : options.find(o => o.name.toLowerCase() === normalizedName.toLowerCase());
 
     if (!option) {
       return {
         valid: false,
         type: "note",
-        name: custom.name || custom.option_name || "custom note",
+        name: normalizedName || "custom note",
         custom_value: custom.custom_value || custom.value || "",
         price_delta: 0,
         cost_delta: 0,

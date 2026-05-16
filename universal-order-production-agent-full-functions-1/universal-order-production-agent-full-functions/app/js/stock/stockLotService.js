@@ -6,6 +6,7 @@ import { logActivity } from "../audit/auditService.js";
 import { assertValid } from "../errors/validationService.js";
 import { getComponent } from "../orders/productService.js";
 import { ensureDefaultWarehouse } from "./materialService.js";
+import { unitLabel } from "../utils/unitLabels.js";
 
 function asNumber(value) {
   const number = Number(value);
@@ -13,10 +14,10 @@ function asNumber(value) {
 }
 
 function toBaseUnit(component, qty, unit) {
-  if (!validateUnit(unit)) throw new Error(`Invalid unit: ${unit}`);
-  if (!component) throw new Error("Material not found.");
+  if (!validateUnit(unit)) throw new Error(`Некоректна одиниця виміру: ${unitLabel(unit) || unit}. Оберіть кг, г, л, мл, шт, уп. або кор.`);
+  if (!component) throw new Error("Матеріал не знайдено.");
   if (!canConvert(unit, component.unit)) {
-    throw new Error(`Unit ${unit} cannot be converted to base unit ${component.unit}.`);
+    throw new Error(`Одиницю ${unitLabel(unit)} не можна перерахувати в базову одиницю матеріалу ${unitLabel(component.unit)}.`);
   }
   return convert(Number(qty), unit, component.unit);
 }

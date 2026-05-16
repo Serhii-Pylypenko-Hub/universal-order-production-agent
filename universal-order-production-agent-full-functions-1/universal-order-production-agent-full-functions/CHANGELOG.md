@@ -3,9 +3,21 @@
 ## Unreleased
 
 Added:
+- Calendar tab now has real working actions: reschedule/order planning, work-time blocking, recalculated free hours, and status columns.
+- Workspace tabs now show a short scenario strip so the main action is first and reference creation stays secondary until needed.
+- User docs and demo test instructions now describe the calendar workflow, blocking hours, and left-to-right UX rule for future modules.
+- Requirements now include mandatory future UX/error scenarios for empty required fields, invalid values, successful save, system errors, reference search/create flow, and planned inactive blocks.
+- Telegram bot start from web is hardened: no stale JS cache for static assets after restart, refreshed runtime path files, clearer config readiness, duplicate-start protection, visible PID, error log feedback, and automatic runtime status refresh.
+- Documentation now records the next required web audit: walk through every tab, align the main workflow, validate all active fields, keep planned blocks inactive, and expose backend/bot/AI functionality consistently in web.
 - ERP inventory design document with FIFO, stock lots, manager manual lot selection, manual overrides, purchase receipt lots, and bot-management rules.
 - Schema version `0.7.0` with `StockLots`, `ReservationLots`, `OrderMaterialRequirements`, `ProductionRuns`, `WasteWriteOffs`, `StockAdjustments`, `Warehouses`, `Suppliers`, `SupplierMaterials`, `Alerts`, and bot-management sheets.
 - Validation and table UI requirements for spreadsheet-like entry, Ukrainian field-level instructions, safe system errors, local developer alerts, and optional GitHub issue reporting.
+- Shared field-level validation principle: every input should show inline Ukrainian help, distinguish missing required fields from invalid values, confirm accepted values, and clear stale hints after successful save.
+- Field hints now appear after user interaction or action submission, not as a noisy wall of hints on first screen load.
+- Local demo sign-in recovery: duplicate registration moves the user to the sign-in tab, and the sign-in form can reset the local demo password when a tester forgets it.
+- Web workspace navigation split into separate operational blocks: calendar, stock balances, inbound receipts, procurement, production/consumption, tech cards, bot management, payments, AI, and settings.
+- Calendar module now shows a 7-day working-hours grid with capacity, blocks, order slots, and a Trello-style status board with quick order opening.
+- Web server health endpoint `/api/health` and startup validation so `START_APP.bat` can detect when port 3000 is occupied by an old/wrong local server instead of letting registration fail with `Unknown API route`.
 - Inventory workspace API and web UI for material creation, duplicate warnings, lot receipt, FIFO lot visibility, active order material plans, detailed Ukrainian validation, and spreadsheet-style keyboard navigation.
 - Production workflow API and UI actions for starting production, completing with stock consumption, releasing reserves, and manually changing or adding order materials with automatic re-reservation.
 - Catalog/tech-card, purchase, and bot-management workspaces with APIs and web forms for products, recipes, purchase receipt, bot settings, templates, and order-intake flow steps.
@@ -51,6 +63,16 @@ Added:
 - Release start instruction updated so users launch the app once and then control the Telegram bot from the web cabinet.
 - Windows Task Scheduler autostart and watchdog scripts for keeping the local Telegram bot running after user login.
 - Web controls for enabling and disabling the local Telegram bot permanent mode without opening the project folder.
+- Web dashboard order calendar with active order statuses, planned dates, readiness, delivery/payment summary, and quick production handoff.
+- Dashboard `Що закупити` working procurement block with preview, one-click draft purchase request creation, and direct jump to the full warehouse procurement plan.
+- Stable connection settings save flow: project-root `.env` is used regardless of launch folder, saved token/API statuses are shown immediately, and the actual config path is visible in the setup screen.
+- Ukrainian demo product/material names in the cake workspace and searchable existing-product/material pickers in tech cards, purchases, receipts, and manual production materials.
+
+- Telegram order prompt now returns Ukrainian product/customization names, with backend aliases for old English chat values so previous bot context does not break order creation.
+
+- Search-first reference UX: unknown product/material names entered in selectors now open a modal that explains the missing reference and offers to create the product/material instead of silently failing.
+
+- Progressive left-to-right web workflow: new product/material forms stay hidden until explicitly needed, keeping receipts and tech-card entry focused on the primary action.
 
 ## 0.6.0 — Connection Layer
 

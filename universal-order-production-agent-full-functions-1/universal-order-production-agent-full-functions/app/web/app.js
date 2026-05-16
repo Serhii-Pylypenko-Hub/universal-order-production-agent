@@ -144,8 +144,10 @@ const state = {
   purchases: null,
   bot: null,
   botRuntime: null,
+  botRuntimePoll: null,
   aiStatus: null,
   activeModule: localStorage.getItem("active_module") || "dashboard",
+  lookupCreate: null,
   pendingAiCommand: ""
 };
 
@@ -153,9 +155,11 @@ const authView = document.querySelector("#authView");
 const appView = document.querySelector("#appView");
 const registerForm = document.querySelector("#registerForm");
 const loginForm = document.querySelector("#loginForm");
+const resetPasswordButton = document.querySelector("#resetPasswordButton");
 const authMessage = document.querySelector("#authMessage");
 const connectionsForm = document.querySelector("#connectionsForm");
 const connectionsMessage = document.querySelector("#connectionsMessage");
+const connectionStatus = document.querySelector("#connectionStatus");
 const workspaceMessage = document.querySelector("#workspaceMessage");
 const demoReadiness = document.querySelector("#demoReadiness");
 const userLabel = document.querySelector("#userLabel");
@@ -170,6 +174,7 @@ const orderMaterialsTable = document.querySelector("#orderMaterialsTable");
 const procurementEnabled = document.querySelector("#procurementEnabled");
 const procurementHorizonDays = document.querySelector("#procurementHorizonDays");
 const procurementMessage = document.querySelector("#procurementMessage");
+const dashboardProcurementMessage = document.querySelector("#dashboardProcurementMessage");
 const procurementPlanTable = document.querySelector("#procurementPlanTable");
 const productionPanel = document.querySelector("#productionPanel");
 const productionTitle = document.querySelector("#productionTitle");
@@ -195,6 +200,11 @@ const aiAssistantResult = document.querySelector("#aiAssistantResult");
 const helpOverlay = document.querySelector("#helpOverlay");
 const helpSearchInput = document.querySelector("#helpSearchInput");
 const helpContent = document.querySelector("#helpContent");
+const lookupCreateOverlay = document.querySelector("#lookupCreateOverlay");
+const lookupCreateTitle = document.querySelector("#lookupCreateTitle");
+const lookupCreateText = document.querySelector("#lookupCreateText");
+const lookupCreateButton = document.querySelector("#lookupCreateButton");
+const lookupCancelButton = document.querySelector("#lookupCancelButton");
 const reportBalanceDate = document.querySelector("#reportBalanceDate");
 const reportMonths = document.querySelector("#reportMonths");
 const balanceReportTable = document.querySelector("#balanceReportTable");
@@ -298,8 +308,12 @@ async function api(path, options = {}) {
   });
   const data = await response.json();
   if (!response.ok || data.ok === false) {
-    const error = new Error(data.error || "Request failed.");
+    const message = data.code === "UNKNOWN_API_ROUTE" || data.error === "Unknown API route."
+      ? "Сервер не знайшов потрібний API-маршрут. Ймовірно, відкрито старий запуск або інший застосунок на цьому порту. Закрийте старий процес, запустіть START_APP.bat ще раз і оновіть сторінку."
+      : data.error || "Request failed.";
+    const error = new Error(message);
     Object.assign(error, data);
+    error.message = message;
     throw error;
   }
   return data;
@@ -366,14 +380,138 @@ function closeHelp() {
   helpOverlay.setAttribute("aria-hidden", "true");
 }
 
+function entityLabel(type) {
+  return type === "product" ? "продукт" : "матеріал";
+}
+
+function openLookupCreateModal(config) {
+  if (!config?.name) return;
+  state.lookupCreate = config;
+  const label = entityLabel(config.type);
+  lookupCreateTitle.textContent = `${label[0].toUpperCase()}${label.slice(1)} не знайдено`;
+  lookupCreateText.textContent = `У довіднику немає позиції "${config.name}". Перевірте написання або створіть новий ${label}, якщо це справді нова позиція.`;
+  lookupCreateButton.textContent = `Створити ${label}`;
+  lookupCreateOverlay.classList.remove("hidden");
+  lookupCreateOverlay.setAttribute("aria-hidden", "false");
+  lookupCreateButton.focus();
+}
+
+function closeLookupCreateModal(focusSearch = true) {
+  const previous = state.lookupCreate;
+  lookupCreateOverlay.classList.add("hidden");
+  lookupCreateOverlay.setAttribute("aria-hidden", "true");
+  state.lookupCreate = null;
+  if (focusSearch) previous?.input?.focus();
+}
+
+function revealReferenceCreateForm(type, name = "") {
+  const isProduct = type === "product";
+  const form = isProduct ? productForm : materialForm;
+  setActiveModule(isProduct ? "techcards" : "inventory");
+  form.classList.remove("hidden");
+  if (name) form.name.value = name;
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+  setFieldHint(
+    form.name,
+    "ok",
+    isProduct
+      ? "Назву перенесено. Заповніть одиницю продажу, ціну та маржу, щоб створити продукт."
+      : "Назву перенесено. Оберіть одиницю виміру і створіть матеріал, потім прийміть партію."
+  );
+  form.unit.focus();
+}
+
+function hideReferenceCreateForm(type) {
+  const form = type === "product" ? productForm : materialForm;
+  form.classList.add("hidden");
+}
+
+function ensureReferenceCreateToggle(type, form, labelText) {
+  if (document.querySelector(`[data-reference-create-toggle="${type}"]`)) return;
+  form.classList.add("reference-create-form", "hidden");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "secondary reference-create-toggle";
+  button.dataset.referenceCreateToggle = type;
+  button.textContent = labelText;
+  button.addEventListener("click", () => revealReferenceCreateForm(type));
+  form.parentElement.insertBefore(button, form);
+}
+
+function selectOptionByValue(select, value) {
+  if (!value) return false;
+  select.value = value;
+  if (select.value !== value) return false;
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+  const searchInput = select.previousElementSibling?.classList?.contains("select-search")
+    ? select.previousElementSibling
+    : null;
+  if (searchInput) syncSearchableSelect(select, searchInput);
+  return true;
+}
+
+function createLookupEntityFromModal() {
+  const config = state.lookupCreate;
+  if (!config?.name) return closeLookupCreateModal(false);
+  closeLookupCreateModal(false);
+
+  if (config.type === "product") {
+    revealReferenceCreateForm("product", config.name);
+    return true;
+  }
+
+  revealReferenceCreateForm("material", config.name);
+}
+
 function numberText(value) {
   const number = Number(value);
   return Number.isFinite(number) ? Number(number.toFixed(3)).toString() : "0";
 }
 
+function unitText(unit) {
+  const labels = {
+    kg: "кг",
+    g: "г",
+    l: "л",
+    ml: "мл",
+    pcs: "шт",
+    pack: "уп.",
+    box: "кор."
+  };
+  return labels[String(unit || "")] || unit || "";
+}
+
+function unitOptions(units = ["kg", "g", "l", "ml", "pcs", "pack", "box"]) {
+  return units.map(unit => {
+    const value = typeof unit === "object" ? unit.value : unit;
+    const label = typeof unit === "object" ? unit.label : unitText(unit);
+    return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+  }).join("");
+}
+
+function shortDate(value) {
+  if (!value) return "не вказано";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value).slice(0, 10);
+  return parsed.toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "2-digit" });
+}
+
+function shortDateTime(value) {
+  if (!value) return "не заплановано";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value).slice(0, 16);
+  return parsed.toLocaleString("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 function validateFormDetailed(form) {
   const errors = [];
   form.querySelectorAll(".missing-field, .invalid-field").forEach(field => field.classList.remove("missing-field", "invalid-field"));
+  clearFieldHints(form);
 
   const invalidMessages = new Map();
 
@@ -421,6 +559,12 @@ function validateFormDetailed(form) {
   });
 
   errors.push(...invalidMessages.values());
+  for (const [field, message] of invalidMessages.entries()) {
+    setFieldHint(field, "error", message);
+  }
+  form.querySelectorAll(".missing-field").forEach(field => {
+    setFieldHint(field, "error", field.dataset.instruction || `Не заповнено обов'язкове поле "${field.dataset.label || field.name}". Заповніть його, щоб продовжити.`);
+  });
 
   if (errors.length) {
     const first = form.querySelector(".missing-field, .invalid-field");
@@ -466,12 +610,16 @@ function validateConnectionFields() {
   ];
 
   connectionsForm.querySelectorAll(".missing-field, .invalid-field").forEach(field => field.classList.remove("missing-field", "invalid-field"));
+  clearFieldHints(connectionsForm);
   for (const check of checks) {
     const value = String(check.field?.value || "").trim();
     if (!value || value === "********") continue;
     if (!check.pattern.test(value)) {
       check.field.classList.add("invalid-field");
+      setFieldHint(check.field, "error", check.message);
       errors.push(check.message);
+    } else {
+      setFieldHint(check.field, "ok", "Формат правильний. Натисніть «Зберегти», щоб записати поле.");
     }
   }
 
@@ -488,8 +636,24 @@ function validateConnectionFields() {
   for (const [field, message] of requiredConnectionFields) {
     if (!String(field?.value || "").trim()) {
       field.classList.add("missing-field");
+      setFieldHint(field, "error", message);
       errors.push(message);
     }
+  }
+
+  const secretRequiredFields = [
+    [connectionsForm.TELEGRAM_BOT_TOKEN, "Не заповнено обов'язкове поле \"Telegram bot token\". Вставте повний token з BotFather.", state.connections?.telegram?.token_set],
+    [connectionsForm.OPENROUTER_API_KEY, "Не заповнено обов'язкове поле \"OpenRouter API key\". Вставте повний ключ, який починається з sk-or-.", state.connections?.ai?.openrouter_key_set]
+  ];
+  for (const [field, message, alreadySaved] of secretRequiredFields) {
+    if (String(field?.value || "").trim()) continue;
+    if (alreadySaved) {
+      setFieldHint(field, "saved", "Уже збережено. Введіть нове значення тільки якщо хочете замінити.");
+      continue;
+    }
+    field.classList.add("missing-field");
+    setFieldHint(field, "error", message);
+    errors.push(message);
   }
 
   const first = connectionsForm.querySelector(".missing-field, .invalid-field");
@@ -504,6 +668,7 @@ function applyServerValidationErrors(form, validationErrors = []) {
     const field = form.elements?.[error.field];
     if (!field) continue;
     field.classList.add(error.category === "missing_required" || error.type === "required" ? "missing-field" : "invalid-field");
+    setFieldHint(field, "error", error.instruction || error.message || "Перевірте це поле.");
   }
   const first = form.querySelector(".missing-field, .invalid-field");
   if (first) first.focus();
@@ -516,12 +681,95 @@ function showFormError(form, messageElement, error) {
     : error.message);
 }
 
+function updateConnectionLiveFeedback(field) {
+  if (!field?.dataset?.touched) return;
+  const rules = new Map([
+    [connectionsForm.TELEGRAM_BOT_TOKEN, [/^\d{6,}:[A-Za-z0-9_-]{20,}$/, "Token має формат 123456789:довгий_ключ з BotFather."]],
+    [connectionsForm.MANAGER_CHAT_ID, [/^-?\d{5,}$/, "Chat ID має бути числом, для групи може починатися з -100."]],
+    [connectionsForm.OPENROUTER_API_KEY, [/^sk-or-[A-Za-z0-9_-]{12,}/, "Ключ має починатися з sk-or-."]],
+    [connectionsForm.LOCAL_DATA_PATH, [/\.json$/i, "Шлях має закінчуватися на .json."]]
+  ]);
+  const rule = rules.get(field);
+  if (!rule) return;
+  field.classList.remove("missing-field", "invalid-field");
+  const value = String(field.value || "").trim();
+  if (!value) {
+    const saved = field === connectionsForm.TELEGRAM_BOT_TOKEN
+      ? state.connections?.telegram?.token_set
+      : field === connectionsForm.OPENROUTER_API_KEY
+        ? state.connections?.ai?.openrouter_key_set
+        : false;
+    setFieldHint(field, saved ? "saved" : "", saved ? "Уже збережено. Введіть нове значення тільки якщо хочете замінити." : "");
+    return false;
+  }
+  if (!rule[0].test(value)) {
+    field.classList.add("invalid-field");
+    setFieldHint(field, "error", rule[1]);
+    return;
+  }
+  setFieldHint(field, "ok", "Введено правильно. Натисніть «Зберегти», щоб записати.");
+}
+
+function updateGenericFieldFeedback(field) {
+  if (!field?.dataset?.touched) return;
+  if (!field || field.closest("#connectionsForm") || field.disabled || !labelForField(field)) return;
+  if (!["INPUT", "SELECT", "TEXTAREA"].includes(field.tagName)) return;
+
+  field.classList.remove("missing-field", "invalid-field");
+  const value = String(field.value || "").trim();
+  const label = field.dataset.label || field.name || "Поле";
+
+  if (!value) {
+    setFieldHint(field, "", field.required ? `Обов'язкове поле: ${label}.` : "");
+    return;
+  }
+
+  if (field.type === "number") {
+    const number = Number(value);
+    const min = field.min === "" ? null : Number(field.min);
+    if (!Number.isFinite(number) || (min !== null && number < min)) {
+      field.classList.add("invalid-field");
+      setFieldHint(field, "error", field.dataset.instruction || `Вкажіть коректне число${min !== null ? ` не менше ${min}` : ""}.`);
+      return;
+    }
+  }
+
+  if (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    field.classList.add("invalid-field");
+    setFieldHint(field, "error", "Вкажіть email у форматі name@example.com.");
+    return;
+  }
+
+  const minLength = Number(field.getAttribute("minlength"));
+  if (Number.isFinite(minLength) && minLength > 0 && value.length < minLength) {
+    field.classList.add("invalid-field");
+    setFieldHint(field, "error", `Мінімум ${minLength} символів.`);
+    return;
+  }
+
+  if (field.getAttribute("pattern")) {
+    const pattern = new RegExp(field.getAttribute("pattern"));
+    if (!pattern.test(value)) {
+      field.classList.add("invalid-field");
+      setFieldHint(field, "error", field.title || "Перевірте формат поля.");
+      return;
+    }
+  }
+
+  if (field.required || field.type === "number" || field.type === "email" || field.getAttribute("pattern")) {
+    setFieldHint(field, "ok", "Введено правильно.");
+  }
+}
+
 function markMissingFields(form, messageElement, fields) {
   form.querySelectorAll(".missing-field, .invalid-field").forEach(field => field.classList.remove("missing-field", "invalid-field"));
   const messages = [];
   for (const { name, message } of fields) {
     const field = form.elements?.[name];
-    if (field) field.classList.add("missing-field");
+    if (field) {
+      field.classList.add("missing-field");
+      setFieldHint(field, "error", message);
+    }
     messages.push(message);
   }
   const first = form.querySelector(".missing-field");
@@ -589,6 +837,38 @@ const plannedFieldSelectors = [
 
 function labelForField(field) {
   return field?.closest?.("label");
+}
+
+function setFieldHint(field, kind, text) {
+  const label = labelForField(field);
+  if (!label) return;
+  label.classList.remove("field-ok", "field-error", "field-saved");
+  if (kind) label.classList.add(`field-${kind}`);
+  let hint = label.querySelector(".field-hint");
+  if (!hint) {
+    hint = document.createElement("small");
+    hint.className = "field-hint";
+    label.appendChild(hint);
+  }
+  hint.textContent = text || "";
+}
+
+function clearFieldHints(form) {
+  if (!form) return;
+  form.querySelectorAll(".field-ok, .field-error, .field-saved").forEach(label => {
+    label.classList.remove("field-ok", "field-error", "field-saved");
+  });
+  form.querySelectorAll(".field-hint").forEach(hint => {
+    hint.textContent = "";
+  });
+}
+
+function resetFormWithHints(form) {
+  form.reset();
+  clearFieldHints(form);
+  form.querySelectorAll(".missing-field, .invalid-field").forEach(field => {
+    field.classList.remove("missing-field", "invalid-field");
+  });
 }
 
 function applyFeatureReadiness() {
@@ -667,12 +947,133 @@ function showApp(user) {
   userLabel.textContent = `${user.name} · ${user.email}`;
   setActiveModule(state.activeModule);
   refreshAll();
+  startBotRuntimePolling();
 }
 
 function showAuth() {
   state.user = null;
+  stopBotRuntimePolling();
   appView.classList.add("hidden");
   authView.classList.remove("hidden");
+}
+
+function createSeparatedModule(moduleName, title, subtitle = "") {
+  let section = document.querySelector(`.module-section[data-module="${moduleName}"]`);
+  if (section) return section;
+  section = document.createElement("section");
+  section.className = "panel module-section hidden separated-module";
+  section.dataset.module = moduleName;
+  section.innerHTML = `
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">Окремий блок</p>
+        <h2>${escapeHtml(title)}</h2>
+        ${subtitle ? `<span>${escapeHtml(subtitle)}</span>` : ""}
+      </div>
+    </div>
+    <div class="separated-module-body" id="${escapeHtml(moduleName)}Mount"></div>
+  `;
+  const before = document.querySelector('.module-section[data-module="production"]')
+    || document.querySelector('.module-section[data-module="payments"]')
+    || appView.lastElementChild;
+  before.parentElement.insertBefore(section, before);
+  return section;
+}
+
+function moveToModule(selector, moduleName, options = {}) {
+  const node = document.querySelector(selector);
+  const mount = document.querySelector(`#${moduleName}Mount`);
+  const target = options.withContainer ? node?.closest("div") : node;
+  if (target && mount && target.parentElement !== mount) mount.appendChild(target);
+}
+
+function addModuleWorkflow(moduleName, steps) {
+  const mount = document.querySelector(`#${moduleName}Mount`) || document.querySelector(`.module-section[data-module="${moduleName}"]`);
+  if (!mount || mount.querySelector(":scope > .module-workflow")) return;
+  const workflow = document.createElement("div");
+  workflow.className = "module-workflow";
+  workflow.innerHTML = steps.map(step => `<span>${escapeHtml(step)}</span>`).join("");
+  const head = mount.querySelector(":scope > .panel-head");
+  if (head) head.after(workflow);
+  else mount.prepend(workflow);
+}
+
+function rebuildModuleNavigation() {
+  const nav = document.querySelector(".module-nav");
+  if (!nav) return;
+  const tabs = [
+    ["dashboard", "Огляд"],
+    ["calendar", "Календар"],
+    ["stock", "Залишки"],
+    ["inventory", "Надходження"],
+    ["procurement", "Закупівлі"],
+    ["production", "Виробництво"],
+    ["techcards", "Техкарти"],
+    ["bot", "Бот"],
+    ["payments", "Платежі", "module-tab-planned"],
+    ["assistant", "AI"],
+    ["setup", "Налаштування"]
+  ];
+  nav.innerHTML = tabs.map(([target, label, extra = ""]) => `
+    <button class="module-tab ${target === state.activeModule ? "active" : ""} ${extra}" type="button" data-module-target="${target}">${label}</button>
+  `).join("");
+}
+
+function organizeWorkspaceBlocks() {
+  createSeparatedModule("calendar", "Календар поточних замовлень", "Статуси, планові дати, готовність, доставка і оплата.");
+  createSeparatedModule("stock", "Залишки та резерви", "Поточні залишки матеріалів, партії FIFO і замовлення в роботі.");
+  createSeparatedModule("procurement", "Закупівлі", "План закупівель, заявки, позиції та приймання закупки.");
+  createSeparatedModule("techcards", "Асортимент і техкарти", "Продукти, рецептури і склад матеріалів на одиницю.");
+  createSeparatedModule("bot", "Керування ботом", "Запуск Telegram-бота, шаблони, флоу і Full Assistant.");
+
+  moveToModule(".order-calendar-panel", "calendar");
+  moveToModule("#procurementPanel", "procurement");
+  moveToModule("#purchaseForm", "procurement");
+  moveToModule("#purchaseTable", "procurement", { withContainer: true });
+  moveToModule("#materialsTable", "stock", { withContainer: true });
+  moveToModule("#lotsTable", "stock", { withContainer: true });
+  moveToModule("#orderMaterialsTable", "stock", { withContainer: true });
+  moveToModule("#productForm", "techcards");
+  moveToModule("#techCardForm", "techcards");
+  moveToModule("#catalogTable", "techcards", { withContainer: true });
+  moveToModule("#botSettingForm", "bot");
+  moveToModule("#botTable", "bot", { withContainer: true });
+
+  ensureReferenceCreateToggle("material", materialForm, "Створити новий матеріал");
+  ensureReferenceCreateToggle("product", productForm, "Створити новий продукт");
+
+  addModuleWorkflow("stock", [
+    "1. Перевірте доступно / резерв",
+    "2. Відкрийте дефіцитні позиції",
+    "3. Створіть закупівлю за потреби"
+  ]);
+  addModuleWorkflow("inventory", [
+    "1. Оберіть існуючий матеріал",
+    "2. Введіть партію та ціну",
+    "3. Якщо матеріалу немає - створіть його"
+  ]);
+  addModuleWorkflow("procurement", [
+    "1. Перевірте список закупівель",
+    "2. Створіть або доповніть заявку",
+    "3. Прийміть закупку на склад"
+  ]);
+  addModuleWorkflow("techcards", [
+    "1. Оберіть продукт і матеріал",
+    "2. Додайте рядок техкарти",
+    "3. Якщо позиції немає - створіть її"
+  ]);
+  addModuleWorkflow("bot", [
+    "1. Перевірте статус бота",
+    "2. Налаштуйте шаблони і сценарій",
+    "3. Увімкніть Full Assistant за потреби"
+  ]);
+
+  document.querySelectorAll('.module-section[data-module="inventory"]').forEach(section => {
+    if (section.id !== "inventoryWorkspace") section.remove();
+  });
+  document.querySelector('.module-section[data-module="operations"]')?.remove();
+
+  rebuildModuleNavigation();
 }
 
 function fillConnections(connections) {
@@ -690,6 +1091,43 @@ function fillConnections(connections) {
   connectionsForm.TELEGRAM_WEBHOOK_SECRET.placeholder = connections.telegram.webhook_secret_set ? t("savedPlaceholder") : "random-secret";
   connectionsForm.OPENROUTER_API_KEY.placeholder = connections.ai.openrouter_key_set ? `${t("savedPlaceholder")} (${connections.ai.openrouter_key_length})` : "sk-or-...";
   connectionsForm.GOOGLE_SERVICE_ACCOUNT_JSON.placeholder = connections.google.service_account_json_set ? t("savedPlaceholder") : "base64 json";
+
+  setFieldHint(
+    connectionsForm.TELEGRAM_BOT_TOKEN,
+    connections.telegram.token_set ? "saved" : "",
+    connections.telegram.token_set ? "Збережено. Поле очищене спеціально, щоб не показувати секрет на екрані." : "Вставте token з BotFather і натисніть «Зберегти»."
+  );
+  setFieldHint(
+    connectionsForm.MANAGER_CHAT_ID,
+    connections.telegram.manager_chat_id ? "saved" : "",
+    connections.telegram.manager_chat_id ? "Збережено." : "Вкажіть числовий chat ID менеджера або групи."
+  );
+  setFieldHint(
+    connectionsForm.OPENROUTER_API_KEY,
+    connections.ai.openrouter_key_set ? "saved" : "",
+    connections.ai.openrouter_key_set ? "Збережено. Поле очищене спеціально, щоб не показувати секрет на екрані." : "Вставте ключ OpenRouter, який починається з sk-or-."
+  );
+
+  clearFieldHints(connectionsForm);
+
+  connectionStatus.innerHTML = `
+    <div class="connection-status-item ${connections.telegram.token_set ? "ok" : "missing"}">
+      <strong>Telegram token</strong>
+      <span>${connections.telegram.token_set ? `збережено (${connections.telegram.token_length} символів)` : "не збережено"}</span>
+    </div>
+    <div class="connection-status-item ${connections.telegram.manager_chat_id ? "ok" : "missing"}">
+      <strong>Manager chat ID</strong>
+      <span>${connections.telegram.manager_chat_id || "не збережено"}</span>
+    </div>
+    <div class="connection-status-item ${connections.ai.openrouter_key_set ? "ok" : "missing"}">
+      <strong>OpenRouter API key</strong>
+      <span>${connections.ai.openrouter_key_set ? `збережено (${connections.ai.openrouter_key_length} символів)` : "не збережено"}</span>
+    </div>
+    <div class="connection-status-path">
+      <strong>Файл налаштувань</strong>
+      <span>${escapeHtml(connections.env?.path || ".env")}</span>
+    </div>
+  `;
 
   const ready = Boolean(
     connections.telegram.token_set &&
@@ -720,6 +1158,131 @@ function renderHealth(health) {
   `).join("");
 }
 
+function renderCalendarPlanner(dashboard) {
+  const target = document.querySelector("#orderCalendar");
+  if (!target) return;
+  const rows = dashboard.order_calendar || [];
+  if (!rows.length) {
+    target.innerHTML = `<div class="empty-state">Поточних замовлень для календаря немає. Створіть замовлення або запустіть демо.</div>`;
+    return;
+  }
+  const selected = rows[0] || {};
+  const selectedStart = selected.production_start_at || selected.ready_date || selected.desired_date || new Date().toISOString();
+  const selectedDate = String(selectedStart).slice(0, 10);
+  const selectedTime = String(selectedStart).slice(11, 16) || "09:00";
+  const orderOptions = rows.map(order => `
+    <option value="${escapeHtml(order.order_id)}">
+      ${escapeHtml(order.order_id)} · ${escapeHtml(order.client_name || "Клієнт не вказаний")} · ${escapeHtml(order.status || "New")}
+    </option>
+  `).join("");
+
+  target.innerHTML = `
+    <div class="module-workflow">
+      <span>1. Оберіть замовлення</span>
+      <span>2. Перенесіть дату або заблокуйте час</span>
+      <span>3. Відкрийте замовлення у виробництві</span>
+    </div>
+    <div class="calendar-action-grid">
+      <form class="calendar-action-panel calendar-primary-action" id="calendarRescheduleForm" novalidate>
+        <div class="panel-head compact">
+          <div>
+            <p class="eyebrow">Основна дія</p>
+            <h3>Перенести або запланувати замовлення</h3>
+          </div>
+        </div>
+        <label>Замовлення
+          <select name="order_id" required>${orderOptions}</select>
+        </label>
+        <label>Дата
+          <input type="date" name="date" value="${escapeHtml(selectedDate)}" required>
+        </label>
+        <label>Початок
+          <input type="time" name="start_time" value="${escapeHtml(selectedTime || "09:00")}" required>
+        </label>
+        <label>Тривалість, год
+          <input type="number" name="duration_hours" min="0.25" step="0.25" value="1" required>
+        </label>
+        <div class="form-actions">
+          <button class="primary" type="submit">Зберегти в календарі</button>
+          <button class="secondary open-production" type="button" data-order-id="${escapeHtml(selected.order_id)}">Відкрити у виробництві</button>
+        </div>
+        <p class="message" id="calendarMessage"></p>
+      </form>
+      <form class="calendar-action-panel calendar-secondary-action" id="calendarBlockForm" novalidate>
+        <div class="panel-head compact">
+          <div>
+            <p class="eyebrow">Допоміжно</p>
+            <h3>Заблокувати робочий час</h3>
+          </div>
+        </div>
+        <label>Дата
+          <input type="date" name="date" value="${escapeHtml(selectedDate)}" required>
+        </label>
+        <label>З
+          <input type="time" name="start_time" value="09:00" required>
+        </label>
+        <label>До
+          <input type="time" name="end_time" value="11:00" required>
+        </label>
+        <label>Причина
+          <input type="text" name="reason" placeholder="Наприклад: доставка, ремонт, вихідний">
+        </label>
+        <button class="secondary" type="submit">Додати блокування</button>
+      </form>
+    </div>
+    <div class="calendar-work-grid">
+      ${(dashboard.calendar_work_days || []).map(day => `
+        <section class="calendar-day ${day.free_hours <= 0 ? "is-full" : ""}">
+          <div class="calendar-day-head">
+            <strong>${escapeHtml(day.label)}</strong>
+            <span>${escapeHtml(day.work_start)}-${escapeHtml(day.work_end)}</span>
+          </div>
+          <div class="calendar-capacity">
+            <span>${numberText(day.used_hours)} / ${numberText(day.capacity_hours)} год</span>
+            <meter min="0" max="${escapeHtml(day.capacity_hours)}" value="${escapeHtml(day.used_hours)}"></meter>
+          </div>
+          <div class="calendar-day-orders">
+            ${day.blocked?.length ? day.blocked.map(block => `
+              <div class="calendar-block">
+                <strong>${escapeHtml(block.start_time || "")}-${escapeHtml(block.end_time || "")}</strong>
+                <span>${escapeHtml(block.reason || "Час заблоковано")}</span>
+              </div>
+            `).join("") : ""}
+            ${day.orders.length ? day.orders.map(order => `
+              <button class="calendar-slot open-production ${orderStatusClass(order.status)}" type="button" data-order-id="${escapeHtml(order.order_id)}">
+                <strong>${escapeHtml(order.order_id)}</strong>
+                <span>${escapeHtml(shortDateTime(order.production_start_at || order.calendar_date))}</span>
+                <span>${escapeHtml(order.status || "New")}</span>
+              </button>
+            `).join("") : ""}
+            <span class="calendar-free">Вільно ${numberText(day.free_hours)} год${day.blocked_hours ? ` · заблоковано ${numberText(day.blocked_hours)} год` : ""}</span>
+          </div>
+        </section>
+      `).join("")}
+    </div>
+    <div class="kanban-board">
+      ${(dashboard.order_status_board || []).map(group => `
+        <section class="kanban-column">
+          <div class="kanban-column-head">
+            <strong>${escapeHtml(group.title)}</strong>
+            <span>${group.orders.length}</span>
+          </div>
+          <div class="kanban-cards">
+            ${group.orders.length ? group.orders.map(order => `
+              <article class="kanban-card ${orderStatusClass(order.status)}">
+                <strong>${escapeHtml(order.order_id)}</strong>
+                <span>${escapeHtml(order.client_name || "Клієнт не вказаний")}</span>
+                <small>${escapeHtml(shortDate(order.calendar_date))} · ${escapeHtml(order.delivery_method || "без доставки")}</small>
+                <button class="secondary open-production" type="button" data-order-id="${escapeHtml(order.order_id)}">Відкрити</button>
+              </article>
+            `).join("") : `<div class="kanban-empty">Немає</div>`}
+          </div>
+        </section>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderDashboard(dashboard) {
   state.dashboard = dashboard;
   const labels = {
@@ -736,6 +1299,56 @@ function renderDashboard(dashboard) {
     <div class="metric"><span>${labels[key] || key}</span><strong>${value}</strong></div>
   `).join("");
 
+  const calendarRows = dashboard.order_calendar || [];
+  document.querySelector("#orderCalendar").innerHTML = calendarRows.length
+    ? calendarRows.map(order => `
+      <article class="order-calendar-card ${orderStatusClass(order.status)}">
+        <div class="order-calendar-date">
+          <strong>${escapeHtml(shortDate(order.calendar_date))}</strong>
+          <span>${escapeHtml(shortDateTime(order.production_start_at || order.ready_date || order.desired_date))}</span>
+        </div>
+        <div class="order-calendar-main">
+          <div>
+            <strong>${escapeHtml(order.order_id)}</strong>
+            <span>${escapeHtml(order.client_name || "Клієнт не вказаний")}</span>
+          </div>
+          <span class="order-status-pill">${escapeHtml(order.status || "New")}</span>
+        </div>
+        <div class="order-calendar-meta">
+          <span>Потрібно: ${escapeHtml(shortDate(order.desired_date))}</span>
+          <span>Готовність: ${escapeHtml(shortDate(order.ready_date || order.production_end_at))}</span>
+          <span>Доставка: ${escapeHtml(order.delivery_method || "не вказано")}</span>
+          <span>Оплата: ${escapeHtml(order.payment_status || "не вказано")}</span>
+        </div>
+        <button class="secondary open-production" type="button" data-order-id="${escapeHtml(order.order_id)}">Керувати</button>
+      </article>
+    `).join("")
+    : `<div class="empty-state">Поточних замовлень для календаря немає. Створіть замовлення або запустіть демо, щоб побачити план.</div>`;
+
+  renderCalendarPlanner(dashboard);
+
+  const procurementRows = dashboard.procurement_preview || [];
+  document.querySelector("#createProcurementFromDashboardButton").disabled = !procurementRows.length;
+  document.querySelector("#procurementPreview").innerHTML = procurementRows.length
+    ? `
+      <div class="procurement-preview-summary">
+        <strong>${escapeHtml(dashboard.procurement_summary?.recommended_items || procurementRows.length)} позицій до закупівлі</strong>
+        <span>показано найважливіше, повний список у складі</span>
+      </div>
+      <div class="procurement-preview-list">
+        ${procurementRows.map(row => `
+          <div class="procurement-preview-item ${procurementRowClass(row.severity)}">
+            <div>
+              <strong>${escapeHtml(row.material_name)}</strong>
+              <span>${escapeHtml(row.status || "")}</span>
+            </div>
+            <strong>${numberText(row.recommended_purchase_qty)} ${escapeHtml(unitText(row.unit))}</strong>
+          </div>
+        `).join("")}
+      </div>
+    `
+    : `<div class="empty-state">Список закупівель порожній: критичних дефіцитів немає або контроль залишків вимкнено.</div>`;
+
   document.querySelector("#ordersList").innerHTML = dashboard.recent_orders.length
     ? dashboard.recent_orders.map(order => `
       <div class="list-item"><strong>${order.order_id}</strong><span>${order.status} · ${order.final_price || 0}</span></div>
@@ -744,7 +1357,7 @@ function renderDashboard(dashboard) {
 
   document.querySelector("#stockList").innerHTML = dashboard.low_stock.length
     ? dashboard.low_stock.map(row => `
-      <div class="list-item"><strong>${row.component_id}</strong><span>${row.current_qty} ${row.unit || ""}</span></div>
+      <div class="list-item"><strong>${row.component_id}</strong><span>${row.current_qty} ${unitText(row.unit)}</span></div>
     `).join("")
     : `<div class="list-item"><strong>${t("stockOkTitle")}</strong><span>${t("stockOkText")}</span></div>`;
 
@@ -754,7 +1367,7 @@ function renderDashboard(dashboard) {
         <img src="${escapeHtml(product.image_url || "/assets/products/product-placeholder.svg")}" alt="${escapeHtml(product.name)}">
         <div>
           <strong>${escapeHtml(product.name)}</strong>
-          <span>${product.base_price || 0} UAH / ${escapeHtml(product.unit || "unit")}</span>
+          <span>${product.base_price || 0} UAH / ${escapeHtml(unitText(product.unit) || "од.")}</span>
         </div>
       </div>
     `).join("")
@@ -762,7 +1375,7 @@ function renderDashboard(dashboard) {
 
   document.querySelector("#allStockList").innerHTML = dashboard.stock.length
     ? dashboard.stock.map(row => `
-      <div class="list-item"><strong>${row.component_name}</strong><span>${row.current_qty} ${row.unit || ""}</span></div>
+      <div class="list-item"><strong>${row.component_name}</strong><span>${row.current_qty} ${unitText(row.unit)}</span></div>
     `).join("")
     : `<div class="list-item"><strong>${t("noOrdersTitle")}</strong><span>Stock</span></div>`;
 }
@@ -780,9 +1393,9 @@ function renderReports(reports) {
         ${balance.rows.map(row => `
           <tr>
             <td tabindex="0">${escapeHtml(row.material_name)}</td>
-            <td tabindex="0">${numberText(row.qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.in_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.out_qty)} ${escapeHtml(row.unit)}</td>
+            <td tabindex="0">${numberText(row.qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.in_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.out_qty)} ${escapeHtml(unitText(row.unit))}</td>
             <td tabindex="0">${numberText(row.value)}</td>
           </tr>
         `).join("")}
@@ -813,16 +1426,26 @@ function statusClass(status) {
   return "status-ok";
 }
 
+function orderStatusClass(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (["ready", "completed", "paid", "confirmed"].some(value => normalized.includes(value))) return "order-status-ready";
+  if (["production", "inprogress", "in_progress"].some(value => normalized.includes(value))) return "order-status-work";
+  if (["cancel", "overdue", "blocked"].some(value => normalized.includes(value))) return "order-status-risk";
+  return "order-status-new";
+}
+
 function fillLotMaterialOptions(inventory) {
   const current = lotForm.component_id.value;
   const manualCurrent = manualMaterialForm.component_id.value;
   lotForm.component_id.innerHTML = `<option value="">Оберіть матеріал</option>` + inventory.materials
     .filter(material => String(material.is_active) !== "false")
-    .map(material => `<option value="${escapeHtml(material.component_id)}" data-unit="${escapeHtml(material.unit)}" data-cost="${escapeHtml(material.unit_cost || material.weighted_avg_unit_cost || 0)}">${escapeHtml(material.name)} (${escapeHtml(material.unit)})</option>`)
+    .map(material => `<option value="${escapeHtml(material.component_id)}" data-unit="${escapeHtml(material.unit)}" data-cost="${escapeHtml(material.unit_cost || material.weighted_avg_unit_cost || 0)}">${escapeHtml(material.name)} (${escapeHtml(unitText(material.unit))})</option>`)
     .join("");
   if (current) lotForm.component_id.value = current;
   manualMaterialForm.component_id.innerHTML = lotForm.component_id.innerHTML;
   if (manualCurrent) manualMaterialForm.component_id.value = manualCurrent;
+  attachSearchableSelect(lotForm.component_id, "Почніть вводити назву матеріалу", { type: "material" });
+  attachSearchableSelect(manualMaterialForm.component_id, "Почніть вводити назву матеріалу", { type: "material" });
 }
 
 function procurementRowClass(severity) {
@@ -868,13 +1491,13 @@ function renderProcurementPlan(plan) {
         ${plan.rows.map(row => `
           <tr class="${procurementRowClass(row.severity)}">
             <td tabindex="0">${escapeHtml(row.material_name)}</td>
-            <td tabindex="0">${numberText(row.available_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.reserved_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.required_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.reservation_gap_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.missing_for_orders_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.min_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0"><strong>${numberText(row.recommended_purchase_qty)} ${escapeHtml(row.unit)}</strong></td>
+            <td tabindex="0">${numberText(row.available_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.reserved_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.required_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.reservation_gap_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.missing_for_orders_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.min_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0"><strong>${numberText(row.recommended_purchase_qty)} ${escapeHtml(unitText(row.unit))}</strong></td>
             <td tabindex="0">${escapeHtml(row.status)}</td>
           </tr>
         `).join("")}
@@ -906,7 +1529,7 @@ function renderInventory(inventory) {
         ${inventory.materials.map(material => `
           <tr>
             <td tabindex="0">${escapeHtml(material.name)}</td>
-            <td tabindex="0">${escapeHtml(material.unit)}</td>
+            <td tabindex="0">${escapeHtml(unitText(material.unit))}</td>
             <td tabindex="0">${numberText(material.current_qty)}</td>
             <td tabindex="0">${numberText(material.reserved_qty)}</td>
             <td tabindex="0">${numberText(material.available_qty)}</td>
@@ -939,9 +1562,9 @@ function renderInventory(inventory) {
           <tr>
             <td tabindex="0">${escapeHtml(lot.lot_id)}</td>
             <td tabindex="0">${escapeHtml(lot.component_name)}</td>
-            <td tabindex="0">${numberText(lot.remaining_qty)} ${escapeHtml(lot.unit)}</td>
-            <td tabindex="0">${numberText(lot.reserved_qty)} ${escapeHtml(lot.unit)}</td>
-            <td tabindex="0">${numberText(lot.available_qty)} ${escapeHtml(lot.unit)}</td>
+            <td tabindex="0">${numberText(lot.remaining_qty)} ${escapeHtml(unitText(lot.unit))}</td>
+            <td tabindex="0">${numberText(lot.reserved_qty)} ${escapeHtml(unitText(lot.unit))}</td>
+            <td tabindex="0">${numberText(lot.available_qty)} ${escapeHtml(unitText(lot.unit))}</td>
             <td tabindex="0">${numberText(lot.unit_cost)}</td>
             <td tabindex="0">${escapeHtml(String(lot.received_at || "").slice(0, 10))}</td>
             <td tabindex="0">${escapeHtml(lot.expires_at || "")}</td>
@@ -1019,12 +1642,12 @@ function renderProductionDetails(details) {
         ${details.materials.map(row => `
           <tr>
             <td tabindex="0">${escapeHtml(row.component_name)}</td>
-            <td tabindex="0">${numberText(row.required_qty)} ${escapeHtml(row.unit)}</td>
-            <td tabindex="0">${numberText(row.reserved_qty)} ${escapeHtml(row.unit)}</td>
+            <td tabindex="0">${numberText(row.required_qty)} ${escapeHtml(unitText(row.unit))}</td>
+            <td tabindex="0">${numberText(row.reserved_qty)} ${escapeHtml(unitText(row.unit))}</td>
             <td tabindex="0" class="${Number(row.missing_qty) > 0 ? "status-low" : "status-ok"}">${numberText(row.missing_qty)}</td>
             <td tabindex="0">${escapeHtml(row.source)}</td>
             <td tabindex="0">${escapeHtml(row.override_reason || "")}</td>
-            <td tabindex="0">${row.lots.length ? row.lots.map(lot => `${escapeHtml(lot.lot_id)}: ${numberText(lot.reserved_qty)} ${escapeHtml(lot.unit)} @ ${numberText(lot.unit_cost)}`).join("<br>") : "FIFO не вибрано"}</td>
+            <td tabindex="0">${row.lots.length ? row.lots.map(lot => `${escapeHtml(lot.lot_id)}: ${numberText(lot.reserved_qty)} ${escapeHtml(unitText(lot.unit))} @ ${numberText(lot.unit_cost)}`).join("<br>") : "FIFO не вибрано"}</td>
             <td><button class="secondary edit-requirement" type="button" data-requirement-id="${escapeHtml(row.requirement_id)}" data-component-id="${escapeHtml(row.component_id)}" data-qty="${escapeHtml(row.required_qty)}" data-unit="${escapeHtml(row.unit)}">Змінити</button></td>
           </tr>
         `).join("")}
@@ -1036,8 +1659,88 @@ function renderProductionDetails(details) {
 
 function selectOptions(rows, idField, labelField, placeholder) {
   return `<option value="">${escapeHtml(placeholder)}</option>` + rows
-    .map(row => `<option value="${escapeHtml(row[idField])}" data-unit="${escapeHtml(row.unit || "")}" data-cost="${escapeHtml(row.unit_cost || row.weighted_avg_unit_cost || 0)}">${escapeHtml(row[labelField] || row[idField])}</option>`)
+    .map(row => `<option value="${escapeHtml(row[idField])}" data-unit="${escapeHtml(row.unit || "")}" data-cost="${escapeHtml(row.unit_cost || row.weighted_avg_unit_cost || 0)}">${escapeHtml(row[labelField] || row[idField])}${row.unit ? ` (${escapeHtml(unitText(row.unit))})` : ""}</option>`)
     .join("");
+}
+
+function normalizeSearchValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function updateSearchableSelect(select, input, dispatchChange = false) {
+  const query = normalizeSearchValue(input.value);
+  const options = Array.from(select.options).filter(option => option.value);
+  input.classList.remove("select-search-missing");
+
+  if (!query) {
+    if (select.value) {
+      select.value = "";
+      if (dispatchChange) select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    return true;
+  }
+
+  const match = options.find(option => normalizeSearchValue(option.textContent) === query)
+    || options.find(option => normalizeSearchValue(option.textContent).startsWith(query))
+    || options.find(option => normalizeSearchValue(option.textContent).includes(query));
+
+  if (!match) {
+    if (select.value) {
+      select.value = "";
+      if (dispatchChange) select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    input.classList.add("select-search-missing");
+    return false;
+  }
+
+  if (select.value !== match.value) {
+    select.value = match.value;
+    if (dispatchChange) select.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  return true;
+}
+
+function syncSearchableSelect(select, input) {
+  const selected = select.selectedOptions[0];
+  input.value = selected?.value ? selected.textContent.trim() : "";
+  input.classList.remove("select-search-missing");
+}
+
+function attachSearchableSelect(select, placeholder, config = {}) {
+  if (!select) return;
+  const label = select.closest("label");
+  if (!label) return;
+
+  let input = select.previousElementSibling;
+  if (!input || !input.classList?.contains("select-search")) {
+    input = document.createElement("input");
+    input.type = "search";
+    input.className = "select-search";
+    input.autocomplete = "off";
+    input.dataset.selectSearch = select.name || "select";
+    input.addEventListener("input", () => updateSearchableSelect(select, input, true));
+    input.addEventListener("blur", () => updateSearchableSelect(select, input, true));
+    input.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const found = updateSearchableSelect(select, input, true);
+      if (!found && input.value.trim()) {
+        openLookupCreateModal({
+          type: config.type || "material",
+          name: input.value.trim(),
+          select,
+          input
+        });
+      }
+    });
+    select.addEventListener("change", () => syncSearchableSelect(select, input));
+    label.insertBefore(input, select);
+  }
+
+  input.placeholder = placeholder;
+  input.setAttribute("aria-label", placeholder);
+  if (select.value && document.activeElement !== input) syncSearchableSelect(select, input);
+  if (!select.value && document.activeElement !== input) input.value = "";
 }
 
 function fillOperationSelects() {
@@ -1048,7 +1751,10 @@ function fillOperationSelects() {
   techCardForm.component_id.innerHTML = selectOptions(materials, "component_id", "name", "Оберіть матеріал");
   purchaseForm.purchase_request_id.innerHTML = selectOptions(requests.filter(req => req.status !== "Received"), "purchase_request_id", "purchase_request_id", "Оберіть закупку");
   purchaseForm.component_id.innerHTML = selectOptions(materials, "component_id", "name", "Оберіть матеріал");
-  purchaseForm.unit.innerHTML = `<option value="">Оберіть</option>${["kg", "g", "l", "ml", "pcs", "pack", "box"].map(unit => `<option value="${unit}">${unit}</option>`).join("")}`;
+  purchaseForm.unit.innerHTML = `<option value="">Оберіть</option>${unitOptions()}`;
+  attachSearchableSelect(techCardForm.product_id, "Почніть вводити назву продукту", { type: "product" });
+  attachSearchableSelect(techCardForm.component_id, "Почніть вводити назву матеріалу", { type: "material" });
+  attachSearchableSelect(purchaseForm.component_id, "Почніть вводити назву матеріалу для закупівлі", { type: "material" });
 }
 
 function renderOperations() {
@@ -1065,8 +1771,8 @@ function renderOperations() {
           <tr>
             <td tabindex="0">${escapeHtml(product.name)}</td>
             <td tabindex="0">${numberText(product.base_price)}</td>
-            <td tabindex="0">${escapeHtml(product.unit)}</td>
-            <td tabindex="0">${product.tech_card_items.length ? product.tech_card_items.map(item => `${escapeHtml(item.component_name)}: ${numberText(item.qty_per_unit)} ${escapeHtml(item.unit)}`).join("<br>") : "Не заповнено"}</td>
+            <td tabindex="0">${escapeHtml(unitText(product.unit))}</td>
+            <td tabindex="0">${product.tech_card_items.length ? product.tech_card_items.map(item => `${escapeHtml(item.component_name)}: ${numberText(item.qty_per_unit)} ${escapeHtml(unitText(item.unit))}`).join("<br>") : "Не заповнено"}</td>
           </tr>
         `).join("")}
       </tbody>
@@ -1083,7 +1789,7 @@ function renderOperations() {
             <td tabindex="0">${escapeHtml(request.status)}</td>
             <td tabindex="0">${escapeHtml(request.items_count)}</td>
             <td tabindex="0">${numberText(request.total_expected_cost)}</td>
-            <td tabindex="0">${request.items.length ? request.items.map(item => `${escapeHtml(item.component_name)}: ${numberText(item.total_qty)} ${escapeHtml(item.unit)} @ ${numberText(item.expected_unit_cost)}`).join("<br>") : escapeHtml(request.manager_note || "")}</td>
+            <td tabindex="0">${request.items.length ? request.items.map(item => `${escapeHtml(item.component_name)}: ${numberText(item.total_qty)} ${escapeHtml(unitText(item.unit))} @ ${numberText(item.expected_unit_cost)}`).join("<br>") : escapeHtml(request.manager_note || "")}</td>
           </tr>
         `).join("")}
       </tbody>
@@ -1110,6 +1816,12 @@ function renderOperations() {
 function renderBotRuntime(runtime) {
   state.botRuntime = runtime;
   if (!botRuntimeStatus) return;
+  if (runtime && runtime.config_ready === false) {
+    const missing = runtime.config_missing?.length ? `: ${runtime.config_missing.join(", ")}` : "";
+    botRuntimeStatus.textContent = `Не готово до запуску${missing}`;
+    botRuntimeStatus.className = "runtime-idle";
+    return;
+  }
   if (runtime?.running) {
     const permanent = runtime.autostart?.enabled ? " · постійно" : "";
     botRuntimeStatus.textContent = `Працює · PID ${runtime.pid}${runtime.watchdog_running ? " · watchdog" : ""}${permanent}`;
@@ -1124,6 +1836,9 @@ function renderBotRuntime(runtime) {
     botRuntimeStatus.textContent = "Не запущено";
   }
   botRuntimeStatus.className = "runtime-idle";
+  if (runtime?.last_error) {
+    botRuntimeStatus.textContent += " · є помилка запуску";
+  }
 }
 
 async function refreshOperations() {
@@ -1141,6 +1856,20 @@ async function refreshOperations() {
 async function refreshBotRuntimeStatus() {
   const data = await api("/api/bot-runtime/status");
   renderBotRuntime(data.runtime);
+}
+
+function startBotRuntimePolling() {
+  stopBotRuntimePolling();
+  state.botRuntimePoll = window.setInterval(() => {
+    if (!state.user || appView.classList.contains("hidden")) return;
+    refreshBotRuntimeStatus().catch(() => {});
+  }, 8000);
+}
+
+function stopBotRuntimePolling() {
+  if (!state.botRuntimePoll) return;
+  window.clearInterval(state.botRuntimePoll);
+  state.botRuntimePoll = null;
 }
 
 function renderAiStatus(status) {
@@ -1233,13 +1962,16 @@ async function saveConnectionsFromForm() {
     setMessage(connectionsMessage, validation.message);
     throw new Error(validation.message);
   }
-  await api("/api/connections", { method: "POST", body: JSON.stringify(formJson(connectionsForm)) });
+  const data = await api("/api/connections", { method: "POST", body: JSON.stringify(formJson(connectionsForm)) });
+  fillConnections(data.connections);
   setMessage(connectionsMessage, t("saved"), true);
   connectionsForm.TELEGRAM_BOT_TOKEN.value = "";
   connectionsForm.TELEGRAM_WEBHOOK_SECRET.value = "";
   connectionsForm.OPENROUTER_API_KEY.value = "";
   connectionsForm.GOOGLE_SERVICE_ACCOUNT_JSON.value = "";
 }
+
+organizeWorkspaceBlocks();
 
 document.querySelectorAll(".lang-button").forEach(button => {
   button.addEventListener("click", () => setLanguage(button.dataset.lang));
@@ -1262,9 +1994,19 @@ helpSearchInput.addEventListener("input", () => renderHelp(helpSearchInput.value
 helpOverlay.addEventListener("click", event => {
   if (event.target === helpOverlay) closeHelp();
 });
+lookupCreateButton.addEventListener("click", createLookupEntityFromModal);
+lookupCancelButton.addEventListener("click", () => closeLookupCreateModal(true));
+lookupCreateOverlay.addEventListener("click", event => {
+  if (event.target === lookupCreateOverlay) closeLookupCreateModal(true);
+});
 
 document.addEventListener("keydown", event => {
   const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+  if (event.key === "Escape" && !lookupCreateOverlay.classList.contains("hidden")) {
+    event.preventDefault();
+    closeLookupCreateModal(true);
+    return;
+  }
   if (event.key === "Escape" && !helpOverlay.classList.contains("hidden")) {
     event.preventDefault();
     closeHelp();
@@ -1276,39 +2018,71 @@ document.addEventListener("keydown", event => {
   }
 });
 
-document.querySelector("#registerTab").addEventListener("click", () => {
+function showRegisterTab() {
   document.querySelector("#registerTab").classList.add("active");
   document.querySelector("#loginTab").classList.remove("active");
   registerForm.classList.remove("hidden");
   loginForm.classList.add("hidden");
-});
+}
 
-document.querySelector("#loginTab").addEventListener("click", () => {
+function showLoginTab({ copyFromRegister = false } = {}) {
   document.querySelector("#loginTab").classList.add("active");
   document.querySelector("#registerTab").classList.remove("active");
   loginForm.classList.remove("hidden");
   registerForm.classList.add("hidden");
-});
+  if (copyFromRegister) {
+    loginForm.email.value = registerForm.email.value;
+    loginForm.password.value = registerForm.password.value;
+  }
+  loginForm.email.focus();
+}
+
+document.querySelector("#registerTab").addEventListener("click", showRegisterTab);
+document.querySelector("#loginTab").addEventListener("click", () => showLoginTab());
 
 registerForm.addEventListener("submit", async event => {
   event.preventDefault();
+  const validation = validateFormDetailed(registerForm);
+  if (!validation.ok) return setMessage(authMessage, validation.message);
   try {
     const data = await api("/api/auth/register", { method: "POST", body: JSON.stringify(formJson(registerForm)) });
     setMessage(authMessage, "");
     showApp(data.user);
   } catch (error) {
-    setMessage(authMessage, error.message);
+    if (String(error.message || "").includes("вже існує")) {
+      showLoginTab({ copyFromRegister: true });
+      setMessage(authMessage, "Акаунт з цією поштою вже є. Я переніс пошту і пароль у вкладку «Вхід». Натисніть «Увійти». Якщо пароль не підходить, задайте новий пароль для локального демо.");
+      return;
+    }
+    showFormError(registerForm, authMessage, error);
   }
 });
 
 loginForm.addEventListener("submit", async event => {
   event.preventDefault();
+  const validation = validateFormDetailed(loginForm);
+  if (!validation.ok) return setMessage(authMessage, validation.message);
   try {
     const data = await api("/api/auth/login", { method: "POST", body: JSON.stringify(formJson(loginForm)) });
     setMessage(authMessage, "");
     showApp(data.user);
   } catch (error) {
-    setMessage(authMessage, error.message);
+    showFormError(loginForm, authMessage, error);
+    if (String(error.message || "").includes("Пошта або пароль")) {
+      setMessage(authMessage, `${error.message}\nЯкщо це локальне демо і пароль забули, введіть новий пароль мінімум 8 символів і натисніть «Задати цей пароль для локального демо».`);
+    }
+  }
+});
+
+resetPasswordButton.addEventListener("click", async () => {
+  const validation = validateFormDetailed(loginForm);
+  if (!validation.ok) return setMessage(authMessage, validation.message);
+  try {
+    const data = await api("/api/auth/reset-password", { method: "POST", body: JSON.stringify(formJson(loginForm)) });
+    setMessage(authMessage, "Пароль оновлено, вхід виконано.", true);
+    showApp(data.user);
+  } catch (error) {
+    showFormError(loginForm, authMessage, error);
   }
 });
 
@@ -1320,6 +2094,32 @@ connectionsForm.addEventListener("submit", async event => {
   } catch (error) {
     showFormError(connectionsForm, connectionsMessage, error);
   }
+});
+
+[
+  connectionsForm.TELEGRAM_BOT_TOKEN,
+  connectionsForm.MANAGER_CHAT_ID,
+  connectionsForm.OPENROUTER_API_KEY,
+  connectionsForm.LOCAL_DATA_PATH
+].forEach(field => {
+  field.addEventListener("input", () => {
+    if (field.dataset.touched) updateConnectionLiveFeedback(field);
+  });
+  field.addEventListener("blur", () => {
+    field.dataset.touched = "true";
+    updateConnectionLiveFeedback(field);
+  });
+});
+
+document.addEventListener("blur", event => {
+  if (!event.target?.matches?.("input, select, textarea")) return;
+  event.target.dataset.touched = "true";
+  updateGenericFieldFeedback(event.target);
+}, true);
+
+document.addEventListener("input", event => {
+  if (!event.target?.dataset?.touched) return;
+  updateGenericFieldFeedback(event.target);
 });
 
 document.querySelector("#setupDemoButton").addEventListener("click", async () => {
@@ -1385,10 +2185,14 @@ productForm.addEventListener("submit", async event => {
     const data = await api("/api/catalog/products", { method: "POST", body: JSON.stringify(formJson(productForm)) });
     state.catalog = data.catalog;
     renderOperations();
-    productForm.reset();
+    selectOptionByValue(techCardForm.product_id, data.result?.product?.product_id);
+    resetFormWithHints(productForm);
+    hideReferenceCreateForm("product");
     setMessage(productMessage, data.result.created ? "Продукт створено. Тепер додайте техкарту." : "Такий продукт уже є.", true);
+    setMessage(techCardMessage, data.result.created ? "Продукт створено і вибрано. Тепер додайте матеріал у техкарту." : "Продукт уже був у довіднику і вибраний для техкарти.", true);
+    techCardForm.component_id.focus();
   } catch (error) {
-    setMessage(productMessage, error.message);
+    showFormError(productForm, productMessage, error);
   }
 });
 
@@ -1440,7 +2244,7 @@ purchaseForm.addEventListener("submit", async event => {
     renderOperations();
     setMessage(purchaseMessage, "Позицію додано до закупки.", true);
   } catch (error) {
-    setMessage(purchaseMessage, error.message);
+    showFormError(purchaseForm, purchaseMessage, error);
   }
 });
 
@@ -1485,7 +2289,7 @@ document.querySelector("#saveBotAccountButton").addEventListener("click", async 
     renderOperations();
     setMessage(botMessage, "Бота збережено.", true);
   } catch (error) {
-    setMessage(botMessage, error.message);
+    showFormError(botSettingForm, botMessage, error);
   }
 });
 
@@ -1499,19 +2303,41 @@ document.querySelector("#saveBotAssistantButton").addEventListener("click", asyn
     await refreshAiStatus();
     setMessage(botMessage, "Налаштування Full Assistant збережено.", true);
   } catch (error) {
-    setMessage(botMessage, error.message);
+    showFormError(botSettingForm, botMessage, error);
   }
 });
 
 document.querySelector("#startBotRuntimeButton").addEventListener("click", async () => {
+  const button = document.querySelector("#startBotRuntimeButton");
+  button.disabled = true;
   setMessage(botMessage, "Запускаю Telegram-бота...");
   try {
+    const current = await api("/api/bot-runtime/status");
+    renderBotRuntime(current.runtime);
+    if (current.runtime?.running) {
+      setMessage(botMessage, `Telegram-бот уже працює. PID ${current.runtime.pid}.`, true);
+      return;
+    }
+    if (current.runtime?.config_ready === false) {
+      throw new Error(`Бот не готовий до запуску. Заповніть і збережіть: ${current.runtime.config_missing.join(", ")}.`);
+    }
     const data = await api("/api/bot-runtime/start", { method: "POST", body: JSON.stringify({}) });
     renderBotRuntime(data.runtime);
-    setMessage(botMessage, "Telegram-бот запущено. Тепер можна писати боту в Telegram.", true);
+    setMessage(botMessage, data.runtime.started === false
+      ? `Telegram-бот уже працює. PID ${data.runtime.pid}.`
+      : `Telegram-бот запущено. PID ${data.runtime.pid}. Тепер можна писати боту в Telegram.`,
+      true
+    );
   } catch (error) {
-    setMessage(botMessage, error.message);
+    const details = [
+      error.message,
+      error.missing?.length ? `Заповніть: ${error.missing.join(", ")}.` : "",
+      error.log ? `Останній лог помилки: ${error.log}` : ""
+    ].filter(Boolean).join("\n");
+    setMessage(botMessage, details);
     await refreshBotRuntimeStatus().catch(() => {});
+  } finally {
+    button.disabled = false;
   }
 });
 
@@ -1522,7 +2348,7 @@ document.querySelector("#stopBotRuntimeButton").addEventListener("click", async 
     renderBotRuntime(data.runtime);
     setMessage(botMessage, data.runtime.stopped || data.runtime.watchdog_stopped ? "Telegram-бот зупинено. Якщо встановлено автозапуск, він знову стартує після наступного входу в Windows." : "Telegram-бот не був запущений.", true);
   } catch (error) {
-    setMessage(botMessage, error.message);
+    showFormError(botSettingForm, botMessage, error);
   }
 });
 
@@ -1651,6 +2477,93 @@ orderMaterialsTable.addEventListener("click", async event => {
   }
 });
 
+document.querySelector("#orderCalendar").addEventListener("click", async event => {
+  const button = event.target.closest(".open-production");
+  if (!button) return;
+  try {
+    await openProductionOrder(button.dataset.orderId);
+    setActiveModule("production");
+  } catch (error) {
+    setMessage(productionMessage, error.message);
+  }
+});
+
+document.querySelector("#orderCalendar").addEventListener("change", event => {
+  const select = event.target.closest("#calendarRescheduleForm select[name='order_id']");
+  if (!select) return;
+  const form = select.closest("#calendarRescheduleForm");
+  const button = form?.querySelector(".open-production");
+  if (button) button.dataset.orderId = select.value;
+  const order = (state.dashboard?.order_calendar || []).find(row => row.order_id === select.value);
+  const start = order?.production_start_at || order?.ready_date || order?.desired_date || "";
+  if (start && form) {
+    form.date.value = String(start).slice(0, 10) || form.date.value;
+    form.start_time.value = String(start).slice(11, 16) || form.start_time.value || "09:00";
+  }
+});
+
+document.querySelector("#orderCalendar").addEventListener("submit", async event => {
+  const form = event.target.closest("#calendarRescheduleForm, #calendarBlockForm");
+  if (!form) return;
+  event.preventDefault();
+  const message = document.querySelector("#calendarMessage");
+  const validation = validateFormDetailed(form);
+  if (!validation.ok) {
+    setMessage(message, validation.message);
+    return;
+  }
+
+  try {
+    const endpoint = form.id === "calendarRescheduleForm" ? "/api/calendar/reschedule" : "/api/calendar/block";
+    const data = await api(endpoint, { method: "POST", body: JSON.stringify(formJson(form)) });
+    renderHealth(data.dashboard.health);
+    renderDashboard(data.dashboard);
+    setActiveModule("calendar");
+    setMessage(
+      document.querySelector("#calendarMessage"),
+      form.id === "calendarRescheduleForm"
+        ? "Замовлення перенесено в календарі. Можна відкрити його у виробництві."
+        : "Час заблоковано. Вільні години дня перераховано.",
+      true
+    );
+  } catch (error) {
+    showFormError(form, message, error);
+  }
+});
+
+document.querySelector("#openProcurementButton").addEventListener("click", () => {
+  setActiveModule("procurement");
+  document.querySelector("#procurementPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.querySelector("#createProcurementFromDashboardButton").addEventListener("click", async () => {
+  setMessage(dashboardProcurementMessage, "");
+  try {
+    const settings = state.inventory?.procurement_plan?.settings || {};
+    const horizonDays = settings.horizon_days || 7;
+    const data = await api("/api/purchases/from-procurement-plan", {
+      method: "POST",
+      body: JSON.stringify({
+        enabled: settings.enabled !== false,
+        horizon_days: horizonDays,
+        manager_note: `Автозаявка за контролем залишків на ${horizonDays} днів`
+      })
+    });
+    state.purchases = data.purchases;
+    renderInventory(data.inventory);
+    renderOperations();
+    const dashboard = await api("/api/dashboard");
+    renderHealth(dashboard.dashboard.health);
+    renderDashboard(dashboard.dashboard);
+    setMessage(dashboardProcurementMessage, `Заявку ${data.result.request.purchase_request_id} створено і додано в закупівлі.`, true);
+    setActiveModule("procurement");
+    purchaseForm.purchase_request_id.value = data.result.request.purchase_request_id;
+    purchaseForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    setMessage(dashboardProcurementMessage, error.message);
+  }
+});
+
 productionMaterialsTable.addEventListener("click", event => {
   const button = event.target.closest(".edit-requirement");
   if (!button) return;
@@ -1743,12 +2656,16 @@ materialForm.addEventListener("submit", async event => {
   try {
     const data = await api("/api/inventory/materials", { method: "POST", body: JSON.stringify(formJson(materialForm)) });
     renderInventory(data.inventory);
-    materialForm.reset();
+    selectOptionByValue(lotForm.component_id, data.result?.material?.component_id);
+    resetFormWithHints(materialForm);
+    hideReferenceCreateForm("material");
     setMessage(materialMessage, data.result?.created ? "Матеріал створено. Тепер можна прийняти партію на склад." : "Такий матеріал уже є. Виберіть його у формі приймання партії.", true);
+    setMessage(lotMessage, data.result?.created ? "Матеріал створено і вибрано. Тепер введіть кількість партії." : "Матеріал уже був у довіднику і вибраний для прийому партії.", true);
+    lotForm.qty.focus();
   } catch (error) {
     showFormError(materialForm, materialMessage, error);
     if (error.similar?.length) {
-      materialSuggestions.innerHTML = error.similar.map(item => `<button type="button" data-id="${escapeHtml(item.component_id)}">${escapeHtml(item.name)} (${escapeHtml(item.unit)})</button>`).join("");
+      materialSuggestions.innerHTML = error.similar.map(item => `<button type="button" data-id="${escapeHtml(item.component_id)}">${escapeHtml(item.name)} (${escapeHtml(unitText(item.unit))})</button>`).join("");
     }
   }
 });
@@ -1764,9 +2681,13 @@ document.querySelector("#forceMaterialButton").addEventListener("click", async (
     const payload = { ...formJson(materialForm), force: true };
     const data = await api("/api/inventory/materials", { method: "POST", body: JSON.stringify(payload) });
     renderInventory(data.inventory);
-    materialForm.reset();
+    selectOptionByValue(lotForm.component_id, data.result?.material?.component_id);
+    resetFormWithHints(materialForm);
+    hideReferenceCreateForm("material");
     materialSuggestions.innerHTML = "";
     setMessage(materialMessage, data.result?.created ? "Новий матеріал створено після підтвердження." : "Такий матеріал уже є. Виберіть його у формі приймання партії.", true);
+    setMessage(lotMessage, data.result?.created ? "Матеріал створено і вибрано. Тепер введіть кількість партії." : "Матеріал уже був у довіднику і вибраний для прийому партії.", true);
+    lotForm.qty.focus();
   } catch (error) {
     setMessage(materialMessage, error.message);
   }
@@ -1793,7 +2714,7 @@ lotForm.addEventListener("submit", async event => {
   try {
     const data = await api("/api/inventory/lots", { method: "POST", body: JSON.stringify(formJson(lotForm)) });
     renderInventory(data.inventory);
-    lotForm.reset();
+    resetFormWithHints(lotForm);
     setMessage(lotMessage, "Партію прийнято на склад. Залишки оновлено.", true);
     await refreshAll();
   } catch (error) {
@@ -1817,7 +2738,7 @@ manualMaterialForm.addEventListener("submit", async event => {
     const data = await api("/api/production/requirement", { method: "POST", body: JSON.stringify(formJson(manualMaterialForm)) });
     renderInventory(data.inventory);
     renderProductionDetails(data.result.details);
-    manualMaterialForm.reset();
+    resetFormWithHints(manualMaterialForm);
     setMessage(productionMessage, "Матеріал замовлення змінено. Резерв перераховано.", true);
   } catch (error) {
     showFormError(manualMaterialForm, productionMessage, error);
@@ -1836,7 +2757,7 @@ document.querySelector("#addManualMaterialButton").addEventListener("click", asy
     const data = await api("/api/production/manual-material", { method: "POST", body: JSON.stringify(formJson(manualMaterialForm)) });
     renderInventory(data.inventory);
     renderProductionDetails(data.result.details);
-    manualMaterialForm.reset();
+    resetFormWithHints(manualMaterialForm);
     setMessage(productionMessage, "Матеріал додано до замовлення. Резерв перераховано.", true);
   } catch (error) {
     setMessage(productionMessage, error.message);
