@@ -42,6 +42,15 @@ Added:
 - AI read/analyze commands for inventory balance reports and monthly stock differences.
 - Stepper buttons for numeric web fields such as prices, quantities, days, and months.
 - Backend/web/AI coverage audit document.
+- Inactive `Платежі` web tab with disabled payment and discount placeholders, marked as planned until the finance workflow is activated.
+- Planned Nova Poshta placeholder and fake demo payment requisites; bot flow collects delivery/payment details without creating shipments or real payment actions.
+- Demo assortment stock now includes enough, low, and absent materials so procurement control, reserve changes, and draft purchase request creation are easy to test manually.
+- Local demo product visuals and dashboard product cards for a more realistic presentation database.
+- User-facing README, bot test instruction, and documentation overview now describe the full demo ERP cycle from materials to purchase, order, production, stock write-off, and reports.
+- Web button controls for starting, stopping, and checking the local Telegram polling bot, with batch scripts kept as fallback.
+- Release start instruction updated so users launch the app once and then control the Telegram bot from the web cabinet.
+- Windows Task Scheduler autostart and watchdog scripts for keeping the local Telegram bot running after user login.
+- Web controls for enabling and disabling the local Telegram bot permanent mode without opening the project folder.
 
 ## 0.6.0 — Connection Layer
 

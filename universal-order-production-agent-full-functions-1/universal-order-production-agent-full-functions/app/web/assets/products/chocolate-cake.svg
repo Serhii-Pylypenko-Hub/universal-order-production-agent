@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Chocolate cake">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff3dc"/><stop offset="1" stop-color="#f7c9a2"/></linearGradient><linearGradient id="cake" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6b321f"/><stop offset="1" stop-color="#2d1710"/></linearGradient></defs>
+  <rect width="640" height="420" fill="url(#bg)"/><ellipse cx="320" cy="330" rx="210" ry="34" fill="#9b5b35" opacity=".2"/>
+  <path d="M155 170c0-48 74-88 165-88s165 40 165 88v116c0 48-74 88-165 88s-165-40-165-88z" fill="url(#cake)"/>
+  <ellipse cx="320" cy="170" rx="165" ry="88" fill="#7c3f28"/><path d="M168 166c38 33 269 34 305 1v36c-46 33-256 33-305 0z" fill="#efb974"/>
+  <path d="M196 245c56 25 196 27 250 1v32c-63 31-193 29-250 0z" fill="#4b2418"/>
+  <g fill="#f7d7a6"><circle cx="238" cy="112" r="9"/><circle cx="306" cy="92" r="7"/><circle cx="377" cy="112" r="8"/><circle cx="430" cy="151" r="6"/></g>
+  <path d="M236 154c42-30 129-32 174-1" fill="none" stroke="#f3c57f" stroke-width="12" stroke-linecap="round"/>
+</svg>

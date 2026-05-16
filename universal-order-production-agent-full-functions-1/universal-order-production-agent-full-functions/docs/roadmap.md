@@ -32,12 +32,16 @@
 - Conversation state for multi-step manager actions
 - `/stats` command with order/revenue summary
 - Weekly summary report
+- Keep `Платежі` visible in web as an inactive planned module until the finance workflow is fully validated.
 
 ## v1.0.0 (Client Experience)
 - Client order history via `/myorders`
 - PDF proposal generation
 - Partial payment reminders
 - Order status notifications to clients
+- Activate web payments: payment summary, confirm payment, partial payment, discounts, manual price, debt visibility.
+- Activate Nova Poshta settings: real API key, sender data, branch lookup, shipment creation, tracking status.
+- Activate real payment requisites: user-entered IBAN/tax data, templates, validation, and client-facing payment instructions.
 
 ## v1.1.0 (Production Release)
 - End-to-end demo video

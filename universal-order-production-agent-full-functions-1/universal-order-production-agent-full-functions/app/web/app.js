@@ -143,6 +143,7 @@ const state = {
   catalog: null,
   purchases: null,
   bot: null,
+  botRuntime: null,
   aiStatus: null,
   activeModule: localStorage.getItem("active_module") || "dashboard",
   pendingAiCommand: ""
@@ -183,6 +184,7 @@ const productMessage = document.querySelector("#productMessage");
 const techCardMessage = document.querySelector("#techCardMessage");
 const purchaseMessage = document.querySelector("#purchaseMessage");
 const botMessage = document.querySelector("#botMessage");
+const botRuntimeStatus = document.querySelector("#botRuntimeStatus");
 const catalogTable = document.querySelector("#catalogTable");
 const purchaseTable = document.querySelector("#purchaseTable");
 const botTable = document.querySelector("#botTable");
@@ -272,6 +274,15 @@ const helpSections = [
       "Бейдж готово означає, що поле вже працює в MVP.",
       "Бейдж пізніше означає, що поле зарезервоване під наступний етап і зараз вимкнене.",
       "Невалідні поля підсвічуються червоним і показують конкретну інструкцію."
+    ]
+  },
+  {
+    title: "Платежі",
+    keywords: "платежі оплата борг знижка ручна ціна пізніше",
+    items: [
+      "Вкладка Платежі зарезервована для оплат, боргів, знижок і ручних цін.",
+      "Усі поля цього блоку зараз вимкнені, щоб не зберігати неповні фінансові дані.",
+      "До активації web-екрана оплати і знижки залишаються доступними через backend та менеджерські команди бота."
     ]
   }
 ];
@@ -565,7 +576,15 @@ const plannedFieldSelectors = [
   "#connectionsForm [name='GOOGLE_SHEETS_ID']",
   "#connectionsForm [name='GOOGLE_SERVICE_ACCOUNT_JSON']",
   "#connectionsForm [name='GOOGLE_SERVICE_ACCOUNT_KEY_FILE']",
-  "#connectionsForm [name='GOOGLE_CALENDAR_ID']"
+  "#connectionsForm [name='GOOGLE_CALENDAR_ID']",
+  "#paymentForm input",
+  "#paymentForm select",
+  "#discountForm input",
+  "#discountForm select",
+  "#deliveryIntegrationForm input",
+  "#deliveryIntegrationForm select",
+  "#paymentRequisitesForm input",
+  "#paymentRequisitesForm select"
 ];
 
 function labelForField(field) {
@@ -731,7 +750,13 @@ function renderDashboard(dashboard) {
 
   document.querySelector("#productsList").innerHTML = dashboard.products.length
     ? dashboard.products.map(product => `
-      <div class="list-item"><strong>${product.name}</strong><span>${product.base_price || 0} UAH / ${product.unit || "unit"}</span></div>
+      <div class="product-card">
+        <img src="${escapeHtml(product.image_url || "/assets/products/product-placeholder.svg")}" alt="${escapeHtml(product.name)}">
+        <div>
+          <strong>${escapeHtml(product.name)}</strong>
+          <span>${product.base_price || 0} UAH / ${escapeHtml(product.unit || "unit")}</span>
+        </div>
+      </div>
     `).join("")
     : `<div class="list-item"><strong>${t("noOrdersTitle")}</strong><span>Demo cakes</span></div>`;
 
@@ -1082,6 +1107,25 @@ function renderOperations() {
   `;
 }
 
+function renderBotRuntime(runtime) {
+  state.botRuntime = runtime;
+  if (!botRuntimeStatus) return;
+  if (runtime?.running) {
+    const permanent = runtime.autostart?.enabled ? " · постійно" : "";
+    botRuntimeStatus.textContent = `Працює · PID ${runtime.pid}${runtime.watchdog_running ? " · watchdog" : ""}${permanent}`;
+    botRuntimeStatus.className = "runtime-ok";
+    return;
+  }
+  if (runtime?.watchdog_running) {
+    botRuntimeStatus.textContent = `Watchdog працює, бот перезапускається${runtime.autostart?.enabled ? " · постійно" : ""}`;
+  } else if (runtime?.autostart?.enabled) {
+    botRuntimeStatus.textContent = "Постійний режим увімкнено, бот стартує при вході в Windows";
+  } else {
+    botRuntimeStatus.textContent = "Не запущено";
+  }
+  botRuntimeStatus.className = "runtime-idle";
+}
+
 async function refreshOperations() {
   const [catalog, purchases, bot] = await Promise.all([
     api("/api/catalog"),
@@ -1092,6 +1136,11 @@ async function refreshOperations() {
   state.purchases = purchases.purchases;
   state.bot = bot.bot;
   renderOperations();
+}
+
+async function refreshBotRuntimeStatus() {
+  const data = await api("/api/bot-runtime/status");
+  renderBotRuntime(data.runtime);
 }
 
 function renderAiStatus(status) {
@@ -1154,7 +1203,7 @@ async function runProductionAction(path, okMessage) {
 async function refreshAll() {
   const reportDate = reportBalanceDate?.value || new Date().toISOString().slice(0, 10);
   const months = reportMonths?.value || 6;
-  const [connections, dashboard, reports, inventory, catalog, purchases, bot, aiStatus] = await Promise.all([
+  const [connections, dashboard, reports, inventory, catalog, purchases, bot, botRuntime, aiStatus] = await Promise.all([
     api("/api/connections"),
     api("/api/dashboard"),
     api(`/api/reports/inventory?date=${encodeURIComponent(reportDate)}&months=${encodeURIComponent(months)}`),
@@ -1162,6 +1211,7 @@ async function refreshAll() {
     api("/api/catalog"),
     api("/api/purchases"),
     api("/api/bot-management"),
+    api("/api/bot-runtime/status"),
     api("/api/ai-assistant/status")
   ]);
   fillConnections(connections.connections);
@@ -1173,6 +1223,7 @@ async function refreshAll() {
   state.purchases = purchases.purchases;
   state.bot = bot.bot;
   renderOperations();
+  renderBotRuntime(botRuntime.runtime);
   renderAiStatus(aiStatus);
 }
 
@@ -1447,6 +1498,52 @@ document.querySelector("#saveBotAssistantButton").addEventListener("click", asyn
     renderOperations();
     await refreshAiStatus();
     setMessage(botMessage, "Налаштування Full Assistant збережено.", true);
+  } catch (error) {
+    setMessage(botMessage, error.message);
+  }
+});
+
+document.querySelector("#startBotRuntimeButton").addEventListener("click", async () => {
+  setMessage(botMessage, "Запускаю Telegram-бота...");
+  try {
+    const data = await api("/api/bot-runtime/start", { method: "POST", body: JSON.stringify({}) });
+    renderBotRuntime(data.runtime);
+    setMessage(botMessage, "Telegram-бот запущено. Тепер можна писати боту в Telegram.", true);
+  } catch (error) {
+    setMessage(botMessage, error.message);
+    await refreshBotRuntimeStatus().catch(() => {});
+  }
+});
+
+document.querySelector("#stopBotRuntimeButton").addEventListener("click", async () => {
+  setMessage(botMessage, "Зупиняю Telegram-бота...");
+  try {
+    const data = await api("/api/bot-runtime/stop", { method: "POST", body: JSON.stringify({}) });
+    renderBotRuntime(data.runtime);
+    setMessage(botMessage, data.runtime.stopped || data.runtime.watchdog_stopped ? "Telegram-бот зупинено. Якщо встановлено автозапуск, він знову стартує після наступного входу в Windows." : "Telegram-бот не був запущений.", true);
+  } catch (error) {
+    setMessage(botMessage, error.message);
+  }
+});
+
+document.querySelector("#enableBotAutostartButton").addEventListener("click", async () => {
+  setMessage(botMessage, "Вмикаю постійний режим Telegram-бота...");
+  try {
+    const data = await api("/api/bot-runtime/autostart/enable", { method: "POST", body: JSON.stringify({}) });
+    renderBotRuntime(data.runtime);
+    setMessage(botMessage, "Постійний режим увімкнено. Бот стартуватиме при вході в Windows і watchdog підніматиме його після зупинки.", true);
+  } catch (error) {
+    setMessage(botMessage, error.message);
+    await refreshBotRuntimeStatus().catch(() => {});
+  }
+});
+
+document.querySelector("#disableBotAutostartButton").addEventListener("click", async () => {
+  setMessage(botMessage, "Вимикаю постійний режим Telegram-бота...");
+  try {
+    const data = await api("/api/bot-runtime/autostart/disable", { method: "POST", body: JSON.stringify({}) });
+    renderBotRuntime(data.runtime);
+    setMessage(botMessage, "Постійний режим вимкнено. Бот і watchdog зупинено.", true);
   } catch (error) {
     setMessage(botMessage, error.message);
   }

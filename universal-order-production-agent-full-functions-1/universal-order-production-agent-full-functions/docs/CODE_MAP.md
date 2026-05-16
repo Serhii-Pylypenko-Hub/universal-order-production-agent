@@ -37,7 +37,7 @@
 - `app/js/web/catalogWorkspaceService.js` - products and tech-card management for the web cabinet.
 - `app/js/web/purchaseWorkspaceService.js` - purchase request workspace and receipt into stock lots.
 - `app/js/web/botManagementService.js` - bot settings, templates, and configurable order-intake flow steps.
-- `app/web/index.html`, `app/web/app.js`, `app/web/styles.css` - manager-facing inventory workspace with spreadsheet-style tables and client-side validation.
+- `app/web/index.html`, `app/web/app.js`, `app/web/styles.css` - manager-facing workspace with spreadsheet-style tables, client-side validation, active modules, and inactive planned modules such as `Платежі`.
 
 ## Documentation
 - `docs/user_guide.md` - Ukrainian user guide, module navigation, hotkeys, validation behavior, and bot/AI usage.
@@ -83,5 +83,6 @@
 - Store per-order manual ingredient changes in `OrderMaterialRequirements`, not in tech cards.
 - FIFO is the default, with `MANUAL_LOT` and `MANUAL_OVERRIDE` available to managers.
 
-- `app/js/web/inventoryService.js` також рахує `procurement_plan`: контроль мінімальних залишків, дефіцит на замовлення в горизонті днів і дані для автозаявки на закупівлю.
-- `app/js/reports/inventoryReportService.js` - складські звіти: остаточний баланс на дату і помісячні різниці рухів.
+- `app/js/web/inventoryService.js` also calculates `procurement_plan`: minimum stock control, order-demand shortage by planning horizon, and data for automatic purchase drafts.
+- `app/js/reports/inventoryReportService.js` - inventory reports: final balance on date and monthly stock movement differences.
+- `app/js/orders/paymentService.js` and `app/js/pricing/discountService.js` - backend finance primitives; web currently exposes only an inactive planned `Платежі` placeholder.

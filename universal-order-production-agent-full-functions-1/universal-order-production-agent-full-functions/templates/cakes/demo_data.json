@@ -17,6 +17,7 @@
     {
       "name": "Chocolate Cake",
       "description": "Chocolate demo cake",
+      "image_url": "/assets/products/chocolate-cake.svg",
       "unit": "kg",
       "base_price": 900,
       "margin_percent": 30,
@@ -27,6 +28,7 @@
     {
       "name": "Honey Cake",
       "description": "Honey demo cake",
+      "image_url": "/assets/products/honey-cake.svg",
       "unit": "kg",
       "base_price": 800,
       "margin_percent": 28,
@@ -37,6 +39,7 @@
     {
       "name": "Berry Cheesecake",
       "description": "Berry demo cake",
+      "image_url": "/assets/products/berry-cheesecake.svg",
       "unit": "kg",
       "base_price": 1000,
       "margin_percent": 35,
@@ -47,6 +50,7 @@
     {
       "name": "Napoleon Cake",
       "description": "Napoleon demo cake",
+      "image_url": "/assets/products/napoleon-cake.svg",
       "unit": "kg",
       "base_price": 850,
       "margin_percent": 30,
@@ -57,6 +61,7 @@
     {
       "name": "Carrot Cake",
       "description": "Carrot cake with cream cheese",
+      "image_url": "/assets/products/carrot-cake.svg",
       "unit": "kg",
       "base_price": 780,
       "margin_percent": 30,
@@ -67,6 +72,7 @@
     {
       "name": "Cupcake Box",
       "description": "Box of assorted cupcakes",
+      "image_url": "/assets/products/cupcake-box.svg",
       "unit": "box",
       "base_price": 600,
       "margin_percent": 32,
@@ -94,28 +100,28 @@
       "name": "Cocoa",
       "unit": "kg",
       "unit_cost": 250,
-      "stock": 1.5,
+      "stock": 0.8,
       "min_qty": 0.5
     },
     {
       "name": "Cream",
       "unit": "kg",
       "unit_cost": 180,
-      "stock": 3,
+      "stock": 1.1,
       "min_qty": 1
     },
     {
       "name": "Berries",
       "unit": "kg",
       "unit_cost": 220,
-      "stock": 2,
+      "stock": 0,
       "min_qty": 1
     },
     {
       "name": "Raspberry",
       "unit": "kg",
       "unit_cost": 260,
-      "stock": 1.5,
+      "stock": 0.25,
       "min_qty": 0.5
     },
     {
@@ -150,14 +156,14 @@
       "name": "Cupcake Base",
       "unit": "pcs",
       "unit_cost": 18,
-      "stock": 48,
+      "stock": 8,
       "min_qty": 12
     },
     {
       "name": "Vanilla",
       "unit": "kg",
       "unit_cost": 500,
-      "stock": 0.4,
+      "stock": 0.02,
       "min_qty": 0.1
     }
   ],

@@ -9,6 +9,7 @@ import { createInventoryMaterial, getInventoryWorkspace, getMaterialSuggestions,
 import { addTechCardItem, createCatalogProduct, getCatalogWorkspace } from "./catalogWorkspaceService.js";
 import { addPurchaseRequestItem, createPurchaseRequest, createPurchaseRequestFromProcurementPlan, getPurchaseWorkspace, receivePurchaseRequest } from "./purchaseWorkspaceService.js";
 import { getBotManagementWorkspace, saveBotAccount, saveBotAssistantSettings, saveBotFlowStep, saveBotSetting, saveBotTemplate } from "./botManagementService.js";
+import { disableLocalBotAutostart, enableLocalBotAutostart, getLocalBotStatus, startLocalTelegramBot, stopLocalTelegramBot } from "./localBotProcessService.js";
 import { logVoiceCommand, runAssistantCommand } from "../ai/assistantActionService.js";
 import { getActiveAiMode, isFullAssistantActive, setAiMode, setBotAssistantMode } from "../ai/subscriptionService.js";
 import { getInventoryReports } from "../reports/inventoryReportService.js";
@@ -327,6 +328,51 @@ async function handleApi(req, res, url) {
 
   if (req.method === "GET" && url.pathname === "/api/bot-management") {
     return sendJson(res, 200, { ok: true, bot: getBotManagementWorkspace() });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/bot-runtime/status") {
+    return sendJson(res, 200, { ok: true, runtime: getLocalBotStatus() });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-runtime/start") {
+    try {
+      const runtime = await startLocalTelegramBot();
+      return sendJson(res, 200, { ok: true, runtime });
+    } catch (error) {
+      if (String(error.code || "").startsWith("BOT_")) {
+        return sendJson(res, 400, { ok: false, error: error.message, missing: error.missing || [], log: error.log || "" });
+      }
+      throw error;
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-runtime/stop") {
+    const runtime = stopLocalTelegramBot();
+    return sendJson(res, 200, { ok: true, runtime });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-runtime/autostart/enable") {
+    try {
+      const runtime = await enableLocalBotAutostart();
+      return sendJson(res, 200, { ok: true, runtime });
+    } catch (error) {
+      if (String(error.code || "").startsWith("BOT_")) {
+        return sendJson(res, 400, { ok: false, error: error.message, stdout: error.stdout || "", stderr: error.stderr || "" });
+      }
+      throw error;
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/bot-runtime/autostart/disable") {
+    try {
+      const runtime = await disableLocalBotAutostart();
+      return sendJson(res, 200, { ok: true, runtime });
+    } catch (error) {
+      if (String(error.code || "").startsWith("BOT_")) {
+        return sendJson(res, 400, { ok: false, error: error.message, stdout: error.stdout || "", stderr: error.stderr || "" });
+      }
+      throw error;
+    }
   }
 
   if (req.method === "POST" && url.pathname === "/api/bot-management/settings") {

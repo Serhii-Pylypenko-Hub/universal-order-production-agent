@@ -96,6 +96,8 @@ function createOrderInternal(orderInput) {
     status: "New",
     payment_status: "AwaitingPayment",
     delivery_method: orderInput.delivery_method || "pickup",
+    delivery_details: orderInput.delivery_details || "",
+    payment_method: orderInput.payment_method || "",
     desired_date: orderInput.desired_date || "",
     ready_date: "",
     shipping_date: "",

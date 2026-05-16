@@ -210,10 +210,12 @@ The default bakery example:
    - pickup
    - courier
    - Nova Poshta
+   If Nova Poshta is selected, collect city, branch/postomat, recipient name, and recipient phone. API shipment creation is planned but inactive.
 10. Ask payment method:
    - prepayment
    - full payment
    - cash on delivery
+   Payment requisites can be shown from bot settings. Demo uses fake requisites until the user enters real details.
 11. Show confirmation summary.
 12. After confirmation, create the order and send the accepted-order template.
 
@@ -388,3 +390,4 @@ If GitHub is not configured, the system still stores the developer alert locally
 - Якщо замовлення ще не зарезервоване, але доступного залишку вистачає, система показує `Потрібно зарезервувати`, але не додає позицію в автозаявку на закупівлю.
 - Статуси плану: `Немає на складі`, `Не вистачає на замовлення`, `Потрібно зарезервувати`, `Нижче мінімуму`, `Достатньо`.
 - З плану можна створити чернетку `PurchaseRequests` з рядками `PurchaseRequestItems`; ціна береться з середньозваженої або базової ціни матеріалу.
+- Demo seed навмисно містить матеріали з різними станами: достатньо, нижче мінімуму, повністю відсутні та такі, що стають нижче мінімуму після резервування тестового замовлення. Це дає швидкий ручний сценарій перевірки плану закупівель і створення заявки.

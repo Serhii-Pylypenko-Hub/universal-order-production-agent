@@ -114,6 +114,22 @@ const secondOrder = createOrder({
 if (Number(secondOrder.order_index_for_client) !== 2) throw new Error("Second order index is wrong");
 if (Number(secondOrder.discount_amount) <= 0) throw new Error("Every-N discount was not applied");
 
+const novaOrder = createOrder({
+  event_id: "test_nova_poshta",
+  source: "test",
+  client_name: "Nova Client",
+  client_contact: "+380501234567",
+  product_name: "Honey Cake",
+  quantity: 1,
+  desired_date: new Date().toISOString(),
+  delivery_method: "nova_poshta",
+  delivery_details: "Київ, відділення 12, Олена Іваненко, +380501234567",
+  payment_method: "prepayment"
+});
+if (novaOrder.delivery_method !== "nova_poshta" || !novaOrder.delivery_details || novaOrder.payment_method !== "prepayment") {
+  throw new Error("Order did not save Nova Poshta or payment intake details");
+}
+
 const guarded = updateOrderStatus(firstOrder.order_id, "Ready");
 if (guarded.status === "Ready") throw new Error("State guard allowed invalid transition");
 
@@ -148,6 +164,18 @@ if (getRows("ProcessedEvents").length < 2) throw new Error("ProcessedEvents not 
 const inventory = getInventoryWorkspace();
 if (!inventory.materials.length || !inventory.lots.length) throw new Error("Inventory workspace is incomplete");
 if (!inventory.procurement_plan?.settings) throw new Error("Procurement plan was not included in inventory workspace");
+if (!getRows("Products").every(product => product.image_url)) {
+  throw new Error("Demo products should include local presentation images");
+}
+if (!getRows("BotMediaAssets").some(asset => asset.url_or_file_id?.includes("/assets/products/"))) {
+  throw new Error("Demo bot media assets should include presentation image paths");
+}
+if (!inventory.procurement_plan.rows.find(row => row.material_name === "Berries" && row.severity === "absent")) {
+  throw new Error("Demo procurement plan should show absent Berries");
+}
+if (!inventory.procurement_plan.rows.find(row => row.material_name === "Cupcake Base" && row.severity === "below_min")) {
+  throw new Error("Demo procurement plan should show Cupcake Base below minimum");
+}
 const procurementMaterial = createInventoryMaterial({
   name: "Procurement Test Material",
   unit: "kg",

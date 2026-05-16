@@ -23,3 +23,7 @@
 18. Production runs and deferred consumption
 19. Waste write-offs and stock adjustments
 20. Bot management: greetings, templates, order flow, quick replies, handoff rules
+21. Payments web placeholder: inactive tab, disabled payment/discount forms, docs status `planned`
+22. Activate payments web workflow: order payment summary, confirm payment, partial payment, discount/manual price approval
+23. Nova Poshta planned integration: collect delivery details in bot, keep API shipment creation inactive
+24. Payment requisites planned settings: replace demo fake requisites with user-entered real requisites before launch

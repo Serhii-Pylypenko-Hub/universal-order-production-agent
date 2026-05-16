@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Napoleon cake">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fffaf1"/><stop offset="1" stop-color="#e9d5b0"/></linearGradient><linearGradient id="pastry" x1="0" x2="1"><stop offset="0" stop-color="#f9d48c"/><stop offset="1" stop-color="#c9772b"/></linearGradient></defs>
+  <rect width="640" height="420" fill="url(#bg)"/><ellipse cx="324" cy="327" rx="218" ry="34" fill="#74533a" opacity=".16"/>
+  <path d="M145 292l47-159h315l-47 159z" fill="#bc752e"/><path d="M176 257h310l-13 33H166z" fill="#fff2c7"/><path d="M188 215h309l-12 31H178z" fill="url(#pastry)"/><path d="M201 176h309l-12 29H190z" fill="#fff2c7"/><path d="M212 132h309l-13 33H202z" fill="url(#pastry)"/>
+  <path d="M203 130c67-20 203-23 305 1" fill="none" stroke="#fff6d7" stroke-width="13" stroke-linecap="round"/>
+</svg>

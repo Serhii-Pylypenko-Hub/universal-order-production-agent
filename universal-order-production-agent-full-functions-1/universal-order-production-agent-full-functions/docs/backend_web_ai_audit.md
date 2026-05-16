@@ -7,6 +7,8 @@
 - Operations: products, tech-card rows, purchases, purchase receipt, bot accounts/settings/templates/flow steps/options/promotions.
 - AI: mode switching, text command, voice transcript command, confirmation flow.
 - Reports: inventory balance on date, monthly inventory differences.
+- Payments: planned inactive web block is visible; fields are disabled until the finance workflow is completed.
+- Nova Poshta/payment requisites: planned inactive web placeholders are visible; client bot may collect delivery/payment details, but API shipment and real payment actions remain inactive.
 
 ## Exposed in AI
 
@@ -19,4 +21,4 @@
 
 - Deep CRUD editors for every historical row are intentionally not exposed yet; current web exposes operational workflows first.
 - Full report export to Excel/PDF is not implemented yet.
-- Payment and discount management have backend support, but need a dedicated web settings view before daily use.
+- Payment and discount management have backend support and an inactive web placeholder, but need a dedicated active web workflow before daily use.

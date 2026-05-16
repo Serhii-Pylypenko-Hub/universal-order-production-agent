@@ -1,7 +1,7 @@
 import fs from "fs";
 import { getStore } from "../data/store.js";
 import { loadSchema, ensureSchema } from "../data/schemaManager.js";
-import { appendRow, findOne } from "../data/rowRepository.js";
+import { appendRow, findOne, updateRow } from "../data/rowRepository.js";
 import { id } from "../utils/ids.js";
 import { nowIso } from "../utils/time.js";
 import { logActivity } from "../audit/auditService.js";
@@ -127,7 +127,10 @@ function seedBotManagement() {
     ["BOT-SET-001", "language", "uk", "string", "Основна мова бота."],
     ["BOT-SET-002", "manager_confirmation_before_reservation", "true", "boolean", "Чи потрібне підтвердження менеджера перед резервуванням."],
     ["BOT-SET-003", "max_clarification_count", "10", "number", "Максимальна кількість уточнень перед handoff."],
-    ["BOT-SET-004", "out_of_hours_enabled", "true", "boolean", "Чи показувати окреме повідомлення поза робочим часом."]
+    ["BOT-SET-004", "out_of_hours_enabled", "true", "boolean", "Чи показувати окреме повідомлення поза робочим часом."],
+    ["BOT-SET-005", "nova_poshta_integration_enabled", "false", "boolean", "Nova Poshta integration is planned; bot may collect details but must not create shipments yet."],
+    ["BOT-SET-006", "nova_poshta_collect_details", "true", "boolean", "Collect city, branch and recipient details when client chooses Nova Poshta."],
+    ["BOT-SET-007", "demo_payment_requisites", "ФОП Демо Кондитерська; IBAN UA123456789012345678901234567; ЄДРПОУ 00000000; Призначення: передоплата за замовлення {order_id}", "text", "Fake demo payment requisites for demonstration until user enters real payment details."]
   ];
   for (const [setting_id, key, value, type, description] of settings) {
     if (!findOne("BotSettings", row => row.key === key)) {
@@ -160,9 +163,11 @@ function seedBotManagement() {
     ["BSTEP-006", "allergens", "Алергії", "Чи є алергії або продукти, яких варто уникати?", 50, true, "text", "", "", ""],
     ["BSTEP-007", "desired_date", "Дата", "На яку дату потрібне замовлення? Мінімальний термін виготовлення - 3 дні.", 60, true, "date", "", "", ""],
     ["BSTEP-008", "delivery", "Отримання", "Оберіть спосіб отримання.", 70, true, "option", "", "", ""],
-    ["BSTEP-009", "payment", "Оплата", "Оберіть спосіб оплати.", 80, true, "option", "", "", ""],
-    ["BSTEP-010", "contact", "Контакт", "Залиште номер телефону або інший контакт.", 90, true, "text", "", "", ""],
-    ["BSTEP-011", "confirmation", "Підтвердження", "Перевірте замовлення і підтвердьте.", 100, true, "confirmation", "", "", ""]
+    ["BSTEP-009", "nova_poshta_details", "Дані Нової Пошти", "Вкажіть місто, відділення/поштомат, ПІБ та телефон отримувача. Інтеграція поки не створює ТТН, дані лише передаються менеджеру.", 75, true, "text", "delivery", "nova_poshta", ""],
+    ["BSTEP-010", "payment", "Оплата", "Оберіть спосіб оплати. Для демо можемо показати тестові реквізити.", 80, true, "option", "", "", ""],
+    ["BSTEP-011", "payment_requisites_notice", "Реквізити", "Після підтвердження менеджер надішле реквізити. У демо використовуються фейкові реквізити, які треба замінити перед реальним запуском.", 85, false, "info", "payment", "prepayment", ""],
+    ["BSTEP-012", "contact", "Контакт", "Залиште номер телефону або інший контакт.", 90, true, "text", "", "", ""],
+    ["BSTEP-013", "confirmation", "Підтвердження", "Перевірте замовлення і підтвердьте.", 100, true, "confirmation", "", "", ""]
   ];
   for (const [step_id, step_key, title, prompt_text, sort_order, is_required, validation_type, depends_on_step_key, depends_on_value, media_asset_id] of steps) {
     if (!findOne("BotOrderFlowSteps", row => row.step_key === step_key)) {
@@ -186,13 +191,16 @@ function seedBotManagement() {
   }
 
   const mediaAssets = [
-    ["BMEDIA-001", "Приклади тортів", "photo", "", "Фото прикладів тортів для вибору стилю.", "bot_flow_step", "photo_examples"],
-    ["BMEDIA-002", "Медовик", "photo", "", "Приклад торта Медовик.", "product_option", "taste_honey"],
-    ["BMEDIA-003", "Шоколадний", "photo", "", "Приклад шоколадного торта.", "product_option", "taste_chocolate"]
+    ["BMEDIA-001", "Приклади тортів", "photo", "/assets/products/berry-cheesecake.svg", "Фото прикладів тортів для вибору стилю.", "bot_flow_step", "photo_examples"],
+    ["BMEDIA-002", "Медовик", "photo", "/assets/products/honey-cake.svg", "Приклад торта Медовик.", "product_option", "taste_honey"],
+    ["BMEDIA-003", "Шоколадний", "photo", "/assets/products/chocolate-cake.svg", "Приклад шоколадного торта.", "product_option", "taste_chocolate"]
   ];
   for (const [media_asset_id, name, asset_type, url_or_file_id, caption, linked_entity_type, linked_entity_id] of mediaAssets) {
-    if (!findOne("BotMediaAssets", row => row.media_asset_id === media_asset_id)) {
+    const existing = findOne("BotMediaAssets", row => row.media_asset_id === media_asset_id);
+    if (!existing) {
       appendRow("BotMediaAssets", { media_asset_id, name, asset_type, url_or_file_id, caption, linked_entity_type, linked_entity_id, is_active: true, updated_at: nowIso() });
+    } else if (url_or_file_id && !existing.url_or_file_id) {
+      updateRow("BotMediaAssets", "media_asset_id", media_asset_id, { url_or_file_id, updated_at: nowIso() });
     }
   }
 
@@ -278,6 +286,7 @@ function seedCakesDemo() {
         product_id: id("PROD"),
         name: p.name,
         description: p.description,
+        image_url: p.image_url || "",
         unit: p.unit,
         base_price: p.base_price,
         margin_percent: p.margin_percent,
@@ -286,6 +295,8 @@ function seedCakesDemo() {
         cleanup_buffer: p.cleanup_buffer,
         is_active: true
       });
+    } else if (p.image_url && !product.image_url) {
+      product = updateRow("Products", "product_id", product.product_id, { image_url: p.image_url });
     }
     productMap[p.name] = product.product_id;
   }
@@ -326,7 +337,7 @@ function seedCakesDemo() {
         updated_at: nowIso()
       });
     }
-    if (!findOne("StockLots", r => r.component_id === component.component_id)) {
+    if (Number(c.stock) > 0 && !findOne("StockLots", r => r.component_id === component.component_id)) {
       receiveStockLot({
         component_id: component.component_id,
         warehouse_id: warehouse.warehouse_id,

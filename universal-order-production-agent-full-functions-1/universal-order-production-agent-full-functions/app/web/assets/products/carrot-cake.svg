@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Carrot cake">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#f2fff1"/><stop offset="1" stop-color="#ffd7a9"/></linearGradient><linearGradient id="cake" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d98942"/><stop offset="1" stop-color="#884717"/></linearGradient></defs>
+  <rect width="640" height="420" fill="url(#bg)"/><ellipse cx="320" cy="330" rx="210" ry="34" fill="#7f542e" opacity=".14"/>
+  <path d="M154 174c0-48 75-87 166-87s166 39 166 87v108c0 48-75 87-166 87s-166-39-166-87z" fill="url(#cake)"/><ellipse cx="320" cy="174" rx="166" ry="87" fill="#f0c98c"/>
+  <path d="M169 168c48 38 254 37 303 0v40c-55 33-248 33-303 0z" fill="#fff3db"/><path d="M196 246c65 27 184 27 248 0v31c-66 31-181 31-248 0z" fill="#a65a21"/>
+  <path d="M318 117l71-28 14 34-75 22z" fill="#e87327"/><path d="M391 88c10-26 27-31 48-29-6 23-20 35-43 38z" fill="#4f9b45"/><path d="M390 91c7-20 5-35-10-49 25 3 37 20 31 46z" fill="#70b75f"/>
+</svg>

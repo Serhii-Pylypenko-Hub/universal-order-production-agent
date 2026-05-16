@@ -99,15 +99,21 @@ Invoke-WebRequest http://localhost:3000 -UseBasicParsing
 | --- | --- |
 | `start-local.bat` | Запуск для користувача подвійним кліком |
 | `start-local.ps1` | Основна PowerShell логіка запуску |
-| `start-bot-local.bat` | Запуск Telegram-бота подвійним кліком |
+| `start-bot-local.bat` | Запасний запуск Telegram-бота подвійним кліком; основний запуск тепер є кнопкою у web |
 | `start-bot-local.ps1` | Основна PowerShell логіка запуску бота |
+| `install-bot-autostart.bat` | Встановлення автозапуску Telegram-бота при вході в Windows |
+| `install-bot-autostart.ps1` | PowerShell логіка створення Windows-задачі `AIOperationsTelegramBot` |
+| `bot-watchdog.ps1` | Фоновий watchdog, який піднімає Telegram-бота і перезапускає його після зупинки |
+| `uninstall-bot-autostart.bat` | Вимкнення автозапуску Telegram-бота |
+| `uninstall-bot-autostart.ps1` | PowerShell логіка видалення Windows-задачі автозапуску |
 | `stop-local.bat` | Зупинка подвійним кліком |
 | `stop-local.ps1` | Основна PowerShell логіка зупинки |
-| `stop-bot-local.bat` | Зупинка Telegram-бота подвійним кліком |
+| `stop-bot-local.bat` | Запасна зупинка Telegram-бота подвійним кліком; основна зупинка тепер є кнопкою у web |
 | `stop-bot-local.ps1` | Основна PowerShell логіка зупинки бота |
 | `.local/server.pid` | ID запущеного server process |
 | `.local/server.out.log` | Звичайний output локального сервера |
 | `.local/server.err.log` | Помилки локального сервера |
+| `.local/bot-watchdog.log` | Події watchdog для постійного режиму Telegram-бота |
 
 ## Обмеження
 

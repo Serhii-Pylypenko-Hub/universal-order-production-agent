@@ -81,6 +81,7 @@
           <button class="module-tab" type="button" data-module-target="inventory">Склад</button>
           <button class="module-tab" type="button" data-module-target="production">Виробництво</button>
           <button class="module-tab" type="button" data-module-target="operations">Операції</button>
+          <button class="module-tab module-tab-planned" type="button" data-module-target="payments">Платежі</button>
           <button class="module-tab" type="button" data-module-target="assistant">AI</button>
           <button class="module-tab" type="button" data-module-target="setup">Налаштування</button>
         </nav>
@@ -445,6 +446,18 @@
 
             <form class="inventory-form" id="botSettingForm" novalidate>
               <h3>Керування ботом</h3>
+              <div class="bot-runtime-card">
+                <div>
+                  <strong>Запуск Telegram-бота</strong>
+                  <span id="botRuntimeStatus">Статус перевіряється...</span>
+                </div>
+                <div class="form-actions compact-actions">
+                  <button class="primary" type="button" id="startBotRuntimeButton">Запустити бота</button>
+                  <button class="secondary" type="button" id="stopBotRuntimeButton">Зупинити</button>
+                  <button class="secondary" type="button" id="enableBotAutostartButton">Увімкнути постійно</button>
+                  <button class="secondary" type="button" id="disableBotAutostartButton">Вимкнути постійно</button>
+                </div>
+              </div>
               <label><span>ID бота</span><input name="bot_id" data-label="ID бота" placeholder="BOT-DEFAULT"></label>
               <label><span>Назва бота</span><input name="name" data-label="Назва бота" placeholder="Основний Telegram бот"></label>
               <label><span>Канал</span>
@@ -505,6 +518,95 @@
               <h3>Бот: флоу і шаблони</h3>
               <div class="data-table" id="botTable" tabindex="0"></div>
             </div>
+          </div>
+        </section>
+
+        <section class="panel payments-workspace module-section hidden" data-module="payments">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Платежі</p>
+              <h2>Оплати, борги та знижки</h2>
+            </div>
+            <span class="module-status planned">Пізніше</span>
+          </div>
+
+          <div class="planned-module-note">
+            <strong>Блок зарезервовано під наступний етап.</strong>
+            <span>Backend для оплат і знижок уже є, але робочий веб-екран поки вимкнений, щоб користувач не зберігав неповні фінансові дані.</span>
+          </div>
+
+          <div class="module-grid">
+            <form class="inventory-form planned-module-form" id="paymentForm" novalidate>
+              <h3>Прийняти оплату</h3>
+              <label><span>Замовлення</span><input name="order_id" data-label="Замовлення" placeholder="ORD-..." disabled></label>
+              <label><span>Сума</span><input name="amount" type="number" min="0.01" step="0.01" data-label="Сума" disabled></label>
+              <label><span>Метод</span>
+                <select name="method" data-label="Метод" disabled>
+                  <option value="cash">Готівка</option>
+                  <option value="transfer">Переказ</option>
+                  <option value="card">Картка</option>
+                </select>
+              </label>
+              <label><span>Примітка</span><input name="note" data-label="Примітка" disabled></label>
+              <button class="primary" type="button" disabled>Зберегти оплату</button>
+              <p class="message">Функція буде активована після окремого фінансового екрана.</p>
+            </form>
+
+            <form class="inventory-form planned-module-form" id="discountForm" novalidate>
+              <h3>Знижка / ручна ціна</h3>
+              <label><span>Клієнт або замовлення</span><input name="target_id" data-label="Клієнт або замовлення" disabled></label>
+              <label><span>Тип знижки</span>
+                <select name="discount_type" data-label="Тип знижки" disabled>
+                  <option value="percent">Відсоток</option>
+                  <option value="amount">Сума</option>
+                  <option value="manual_price">Ручна ціна</option>
+                </select>
+              </label>
+              <label><span>Значення</span><input name="value" type="number" min="0" step="0.01" data-label="Значення" disabled></label>
+              <label><span>Причина</span><input name="reason" data-label="Причина" disabled></label>
+              <button class="secondary" type="button" disabled>Застосувати</button>
+              <p class="message">Поки користуйтесь менеджерськими командами бота для оплат і знижок.</p>
+            </form>
+          </div>
+
+          <div class="module-grid">
+            <form class="inventory-form planned-module-form" id="deliveryIntegrationForm" novalidate>
+              <h3>Нова Пошта</h3>
+              <label><span>Інтеграція</span>
+                <select name="nova_poshta_enabled" data-label="Інтеграція Нової Пошти" disabled>
+                  <option value="false">Вимкнено - тільки збір даних</option>
+                </select>
+              </label>
+              <label><span>API ключ</span><input name="nova_poshta_api_key" data-label="API ключ Нової Пошти" placeholder="Буде додано пізніше" disabled></label>
+              <label><span>Що збирає бот</span><input name="nova_poshta_fields" data-label="Що збирає бот" value="Місто, відділення/поштомат, ПІБ, телефон отримувача" disabled></label>
+              <label><span>Повідомлення клієнту</span><input name="nova_poshta_notice" data-label="Повідомлення клієнту" value="Нова Пошта доступна як варіант доставки, ТТН створить менеджер після підтвердження." disabled></label>
+              <p class="message">Бот може пропонувати Нову Пошту і збирати дані, але API-інтеграція та створення ТТН поки неактивні.</p>
+            </form>
+
+            <form class="inventory-form planned-module-form" id="paymentRequisitesForm" novalidate>
+              <h3>Платіжні реквізити</h3>
+              <label><span>Отримувач</span><input name="recipient" data-label="Отримувач" value="ФОП Демо Кондитерська" disabled></label>
+              <label><span>IBAN</span><input name="iban" data-label="IBAN" value="UA123456789012345678901234567" disabled></label>
+              <label><span>ЄДРПОУ / ІПН</span><input name="tax_id" data-label="ЄДРПОУ / ІПН" value="00000000" disabled></label>
+              <label><span>Призначення</span><input name="payment_purpose" data-label="Призначення" value="Передоплата за замовлення {order_id}" disabled></label>
+              <p class="message">Це фейкові demo-реквізити. Перед реальним запуском користувач має вказати свої дані.</p>
+            </form>
+          </div>
+
+          <div class="data-table" tabindex="0">
+            <table>
+              <thead>
+                <tr><th>Можливість</th><th>Статус</th><th>Доступ зараз</th></tr>
+              </thead>
+              <tbody>
+                <tr><td tabindex="0">Підтвердження оплати</td><td tabindex="0" class="status-low">Пізніше у web</td><td tabindex="0">Backend + бот</td></tr>
+                <tr><td tabindex="0">Часткова оплата</td><td tabindex="0" class="status-low">Пізніше у web</td><td tabindex="0">Backend</td></tr>
+                <tr><td tabindex="0">Знижки</td><td tabindex="0" class="status-low">Пізніше у web</td><td tabindex="0">Backend + бот</td></tr>
+                <tr><td tabindex="0">Ручна ціна замовлення</td><td tabindex="0" class="status-low">Пізніше у web</td><td tabindex="0">Backend + бот</td></tr>
+                <tr><td tabindex="0">Нова Пошта</td><td tabindex="0" class="status-low">Пізніше API</td><td tabindex="0">Бот збирає дані</td></tr>
+                <tr><td tabindex="0">Платіжні реквізити</td><td tabindex="0" class="status-low">Demo placeholder</td><td tabindex="0">Фейкові дані для демонстрації</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 

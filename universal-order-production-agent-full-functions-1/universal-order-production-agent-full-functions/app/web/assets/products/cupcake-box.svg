@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Cupcake box">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#eef7ff"/><stop offset="1" stop-color="#ffd8e7"/></linearGradient><linearGradient id="box" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#f0d4bd"/></linearGradient></defs>
+  <rect width="640" height="420" fill="url(#bg)"/><ellipse cx="322" cy="329" rx="220" ry="36" fill="#7d5570" opacity=".14"/>
+  <path d="M143 177h354l-36 155H179z" fill="url(#box)"/><path d="M143 177l72-72h216l66 72z" fill="#fff7ee"/><path d="M215 105l-18 72h264l-30-72z" fill="#f5c7ab"/>
+  <path d="M206 219c0-35 25-58 57-58s57 23 57 58v61H206z" fill="#b46a39"/><path d="M224 181c9-29 68-30 79 0 16 3 27 15 27 30 0 20-17 36-37 36h-61c-21 0-37-16-37-36 0-15 12-28 29-30z" fill="#f9d6e5"/>
+  <path d="M340 219c0-35 25-58 57-58s57 23 57 58v61H340z" fill="#8b4c25"/><path d="M358 181c9-29 68-30 79 0 16 3 27 15 27 30 0 20-17 36-37 36h-61c-21 0-37-16-37-36 0-15 12-28 29-30z" fill="#d9f0ff"/>
+</svg>

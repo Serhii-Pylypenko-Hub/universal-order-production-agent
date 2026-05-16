@@ -156,6 +156,11 @@ async function handleClientMessage(chatId, text, message) {
     if (!parsed.product_name) missingFields.push("який торт");
     if (!parsed.quantity) missingFields.push("вага або кількість");
     if (!parsed.desired_date) missingFields.push("дата");
+    if (!parsed.delivery_method) missingFields.push("спосіб отримання: самовивіз, кур'єр або Нова Пошта");
+    if (parsed.delivery_method === "nova_poshta" && !parsed.delivery_details) {
+      missingFields.push("дані Нової Пошти: місто, відділення/поштомат, ПІБ та телефон отримувача");
+    }
+    if (!parsed.payment_method) missingFields.push("спосіб оплати: передоплата, повна оплата або готівка при отриманні");
     if (missingFields.length) {
       const clarification = `Уточніть, будь ласка: ${missingFields.join(", ")}.`;
       history.push({ role: "user", content: text });
@@ -320,6 +325,8 @@ function buildOrderConfirmation(order) {
     `🆔 ${order.order_id}`,
     `📦 Статус: ${order.status}`,
     order.proposed_price ? `💰 Ціна: ${order.proposed_price} грн` : null,
+    order.delivery_method ? `🚚 Отримання: ${order.delivery_method}${order.delivery_details ? `; ${order.delivery_details}` : ""}` : null,
+    order.payment_method ? `💳 Оплата: ${order.payment_method}` : null,
     order.ready_date ? `📅 Готовність: ${order.ready_date}` : null
   ].filter(Boolean);
   return lines.join("\n");
@@ -341,6 +348,8 @@ function buildManagerNewOrderAlert(order, message) {
     `Клієнт: ${client?.name || message.from?.first_name || order.client_id || "Telegram Client"}`,
     `Контакт: ${client?.contact || message.chat?.id || ""}`,
     `Дата: ${order.desired_date || "не вказано"}`,
+    `Отримання: ${order.delivery_method || "не вказано"}${order.delivery_details ? `; ${order.delivery_details}` : ""}`,
+    `Оплата: ${order.payment_method || order.payment_status || "не вказано"}`,
     `Статус: ${order.status || "New"}`,
     `Сума: ${order.final_price || order.proposed_price || "?"} грн`,
     order.discount_amount ? `Знижка: ${order.discount_amount} грн` : "",
